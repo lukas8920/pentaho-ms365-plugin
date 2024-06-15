@@ -1,6 +1,9 @@
 package nz.co.kehrbusch.pentaho.connections.manage;
 
-import nz.co.kehrbusch.ms365.GraphClient;
+import nz.co.kehrbusch.ms365.GraphClientModule;
+import nz.co.kehrbusch.ms365.interfaces.IGraphClientDetails;
+import nz.co.kehrbusch.ms365.interfaces.IGraphConnection;
+import nz.co.kehrbusch.ms365.interfaces.ISharepointConnection;
 import org.pentaho.di.core.encryption.KettleTwoWayPasswordEncoder;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.support.encryption.PasswordEncoderException;
@@ -11,12 +14,14 @@ import java.util.logging.Logger;
 
 import static nz.co.kehrbusch.pentaho.connections.util.StringHelper.isEmpty;
 
-public class GraphConnectionDetails implements ConnectionDetailsInterface {
+public class GraphConnectionDetails implements ConnectionDetailsInterface, IGraphClientDetails {
     private static final Logger log = Logger.getLogger(GraphConnectionDetails.class.getName());
     private static final Class<?> PKG = GraphConnectionDetails.class;
 
     private final GraphConnectionType graphConnectionType;
     private final KettleTwoWayPasswordEncoder encoder;
+
+    private ISharepointConnection iSharepointConnection;
 
     private String connectionName = "";
     private String description = "";
@@ -130,6 +135,7 @@ public class GraphConnectionDetails implements ConnectionDetailsInterface {
         this.clientId = element.getElementsByTagName("clientid").item(0).getTextContent();
         this.tenantId = element.getElementsByTagName("tenantid").item(0).getTextContent();
         this.description = element.getElementsByTagName("description").item(0).getTextContent();
+        this.iSharepointConnection = GraphClientModule.provideSharepointConnection(this);
     }
 
     public void setScope(String scope){
@@ -162,6 +168,14 @@ public class GraphConnectionDetails implements ConnectionDetailsInterface {
 
     public String getPassword(){
         return this.password;
+    }
+
+    public ISharepointConnection getISharepointConnection(){
+        return this.iSharepointConnection;
+    }
+
+    public void setiSharepointConnection(){
+        this.iSharepointConnection = GraphClientModule.provideSharepointConnection(this);
     }
 
     @Override
@@ -230,7 +244,12 @@ public class GraphConnectionDetails implements ConnectionDetailsInterface {
 
     @Override
     public boolean test() {
-        GraphClient graphClient = new GraphClient(clientId, password, tenantId, new String[]{scope});
-        return graphClient.isConnected();
+        IGraphConnection iGraphConnection = GraphClientModule.provideGraphConnection(this);
+        return iGraphConnection.isConnected();
+    }
+
+    @Override
+    public void onInitiatedByUser() {
+        this.setiSharepointConnection();
     }
 }

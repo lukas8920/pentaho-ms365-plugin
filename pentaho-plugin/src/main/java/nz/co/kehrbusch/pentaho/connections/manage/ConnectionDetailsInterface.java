@@ -19,4 +19,6 @@ public interface ConnectionDetailsInterface {
     void readFileXMLProperties(Element element);
     ConnectionDetailsInterface clone();
     boolean test();
+    //callback called after dialog for user input is disposed
+    void onInitiatedByUser();
 }

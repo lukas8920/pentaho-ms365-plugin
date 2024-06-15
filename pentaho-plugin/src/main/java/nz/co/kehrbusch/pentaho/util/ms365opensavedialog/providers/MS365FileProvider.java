@@ -38,7 +38,7 @@ public class MS365FileProvider extends BaseFileProvider<BaseEntity> {
 
     @Override
     public boolean isAvailable() {
-        //todo here i run a check whether there are details available in connections manager
+        //todo check if details are present with ISharepointConnection
         log.info("Check whether provider is available");
         return true;
     }

@@ -312,6 +312,7 @@ public class ConnectionDialog extends Dialog {
                     mb.open();
                 });
             } else {
+                this.selectedDetails.onInitiatedByUser();
                 connectionManager.saveConnectionDetailsInterface(this.selectedDetails);
                 ConnectionDelegate.refreshMenu();
             }
