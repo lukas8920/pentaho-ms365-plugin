@@ -6,7 +6,6 @@ import java.util.List;
 
 public interface ISharepointConnection {
     //Call drives first, if only one, then ISharepointConnection automatically returns the next level
-    List<ISharepointFile> getDrives(boolean maxNrOfResults);
-    List<ISharepointFile> getRootFiles(boolean maxNrOfResuls);
-    List<ISharepointFile> getChildren(ISharepointFile iSharepointFile, boolean maxNrOfResults);
+    List<ISharepointFile> getDrives(int maxNrOfResults);
+    List<ISharepointFile> getChildren(ISharepointFile iSharepointFile, int maxNrOfResults);
 }
