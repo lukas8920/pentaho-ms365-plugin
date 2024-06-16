@@ -8,4 +8,5 @@ public interface ISharepointFile {
     boolean hasChildren();
     ISharepointFile getParentObject();
     List<ISharepointFile> getChildren();
+    int getChildrenCount();
 }

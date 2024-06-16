@@ -10,10 +10,19 @@ public class SharepointObject implements ISharepointFile {
     private String name;
     private boolean hasChildren;
     private ISharepointFile parent;
+    private int childrenCount = 1;
 
     private final List<ISharepointFile> children;
 
     public SharepointObject(){
+        this.children = new ArrayList<>();
+    }
+
+    public SharepointObject(String id, String name, ISharepointFile parent, int childrenCount){
+        this.id = id;
+        this.name = name;
+        this.childrenCount = childrenCount;
+        this.parent = parent;
         this.children = new ArrayList<>();
     }
 
@@ -48,6 +57,16 @@ public class SharepointObject implements ISharepointFile {
     @Override
     public List<ISharepointFile> getChildren() {
         return this.children;
+    }
+
+    @Override
+    public int getChildrenCount() {
+        return this.childrenCount;
+    }
+
+    public void setChildrenCount(int childrenCount){
+        this.childrenCount = childrenCount;
+        this.hasChildren = childrenCount > 0;
     }
 
     public void addChildren(List<ISharepointFile> iSharepointFiles){
