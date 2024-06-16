@@ -31,45 +31,6 @@ class SharepointConnection implements ISharepointConnection {
         this.graphServiceClient = new GraphServiceClient(clientSecretCredential, iGraphClientDetails.getScope());
     }
 
-    public static void main(String[] args) {
-        SharepointConnection sharepointConnection = new SharepointConnection(new IGraphClientDetails() {
-            @Override
-            public String getScope() {
-                return "https://graph.microsoft.com/.default";
-            }
-
-            @Override
-            public String getTenantId() {
-                return "c72ef424-5d1d-47c0-9a32-27e5e76d49d5";
-            }
-
-            @Override
-            public String getClientId() {
-                return "c901f8d5-8425-4ef1-8538-585deaabac47";
-            }
-
-            @Override
-            public String getPassword() {
-                return "uje8Q~KYda.waGAbhPuHAeK70oUTc1Pf9d_C~cwO";
-            }
-        });
-        List<ISharepointFile> iSharepointFiles = sharepointConnection.getSites(50);
-        List<ISharepointFile> sites = getSites(iSharepointFiles);
-        sites.forEach(site -> {
-            System.out.println(site.getName());
-            site.getChildren().forEach(drive -> {
-                System.out.println(" - " + drive.getName());
-                List<ISharepointFile> children = sharepointConnection.getRootItems(drive, 50);
-                children.forEach(child -> System.out.println(" -- " + child.getName()));
-            });
-        });
-    }
-
-    private static List<ISharepointFile> getSites(List<ISharepointFile> iSharepointFiles){
-        return iSharepointFiles.stream().filter(iSharepointFile -> iSharepointFile.getParentObject() == null)
-                .collect(Collectors.toList());
-    }
-
     @Override
     public List<ISharepointFile> getSites(int maxNrOfResults){
         List<ISharepointFile> iSharepointFiles = new ArrayList<>();
