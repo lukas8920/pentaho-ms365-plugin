@@ -1,5 +1,7 @@
 package nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers;
 
+import nz.co.kehrbusch.ms365.interfaces.ISharepointConnection;
+import nz.co.kehrbusch.ms365.interfaces.entities.ISharepointFile;
 import org.pentaho.di.plugins.fileopensave.api.providers.Entity;
 import org.pentaho.di.plugins.fileopensave.api.providers.File;
 import org.pentaho.di.plugins.fileopensave.api.providers.Providerable;
@@ -9,7 +11,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
-public abstract class BaseEntity implements Entity, Providerable, File {
+public abstract class BaseEntity implements Entity, Providerable, File, ISharepointFile {
     private static final Logger log = Logger.getLogger(BaseEntity.class.getName());
 
     private String provider;
@@ -18,21 +20,24 @@ public abstract class BaseEntity implements Entity, Providerable, File {
     private Date date;
     private boolean canEdit = false;
     private boolean canDelete = false;
-    private MS365Directory parent = null;
+    private BaseEntity parent = null;
+    private int childrenCount;
+    private boolean hasInitChildren = false;
 
-    private final List<BaseEntity> children = new ArrayList<>();
+    protected final List<BaseEntity> children = new ArrayList<>();
     
     @Override public String getProvider() {
         return provider;
     }
 
-    public void setProvider( String provider ) {
-        this.provider = provider;
+    @Override
+    public int getChildrenCount() {
+        return this.childrenCount;
     }
 
-    @Override public abstract String getName();
-
-    public abstract void setName( String name );
+    public void setChildrenCount(int childrenCount) {
+        this.childrenCount = childrenCount;
+    }
 
     @Override public String getPath() {
         StringBuilder builder = new StringBuilder();
@@ -40,7 +45,7 @@ public abstract class BaseEntity implements Entity, Providerable, File {
             return "/sharepoint/";
         } else {
             builder.append("/");
-            MS365Directory parentDirectory = getParentObject();
+            BaseEntity parentDirectory = getParentObject();
             while (parentDirectory != null){
                 builder.insert(0, parentDirectory.getName());
                 builder.insert(0, "/");
@@ -51,11 +56,11 @@ public abstract class BaseEntity implements Entity, Providerable, File {
         }
     }
 
-    public MS365Directory getParentObject(){
+    public BaseEntity getParentObject(){
         return this.parent;
     }
 
-    public void setParent(MS365Directory ms365Object){
+    public void setParent(BaseEntity ms365Object){
         this.parent = ms365Object;
     }
 
@@ -75,24 +80,12 @@ public abstract class BaseEntity implements Entity, Providerable, File {
         return root;
     }
 
-    public void setRoot( String root ) {
-        this.root = root;
-    }
-
     @Override public Date getDate() {
         return date;
     }
 
-    public void setDate( Date date ) {
-        this.date = date;
-    }
-
     @Override public boolean isCanEdit() {
         return canEdit;
-    }
-
-    public void setCanEdit( boolean canEdit ) {
-        this.canEdit = canEdit;
     }
 
     @Override
@@ -100,24 +93,25 @@ public abstract class BaseEntity implements Entity, Providerable, File {
         return canDelete;
     }
 
-    public void setCanDelete( boolean canDelete ) {
-        this.canDelete = canDelete;
-    }
-
     public List<BaseEntity> getChildren(){
-        log.info("Retrieve children from BaseEntity");
         return this.children;
+    };
+
+    public boolean hasInitChildren(){
+        return this.hasInitChildren;
     }
 
-    public void deleteChild(BaseEntity ms365Object){
-        this.children.remove(ms365Object);
+    public void setHasInitChildren(boolean hasInitChildren) {
+        this.hasInitChildren = hasInitChildren;
     }
 
-    public boolean hasChild(BaseEntity ms365Object){
-        return this.children.contains(ms365Object);
+    public abstract void getRemoteChildren(ISharepointConnection iSharepointConnection);
+
+    public void addChild(BaseEntity baseEntity){
+        this.children.add(baseEntity);
     }
 
-    public void addChild(BaseEntity ms365Object){
-        this.children.add(ms365Object);
-    }
+    public abstract void setName(String name);
+
+    public abstract String getName();
 }

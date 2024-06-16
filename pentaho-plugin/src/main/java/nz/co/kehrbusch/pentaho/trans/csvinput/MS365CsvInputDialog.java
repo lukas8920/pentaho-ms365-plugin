@@ -1,23 +1,23 @@
 package nz.co.kehrbusch.pentaho.trans.csvinput;
 
+import nz.co.kehrbusch.pentaho.connections.manage.GraphConnectionDetails;
+import nz.co.kehrbusch.pentaho.connections.manage.MS365ConnectionManager;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.MS365OpenSaveDialog;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365FileProvider;
+import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS36File;
 import org.eclipse.swt.custom.CCombo;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.swt.widgets.Button;
 import org.pentaho.di.core.Const;
-import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.logging.LogChannel;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.plugins.fileopensave.service.ProviderServiceService;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.ui.core.FileDialogOperation;
 import org.pentaho.di.ui.core.widget.TextVar;
-import org.pentaho.di.ui.spoon.Spoon;
 import org.pentaho.di.ui.trans.steps.csvinput.CsvInputDialog;
 
 import javax.swing.*;
@@ -35,6 +35,8 @@ public class MS365CsvInputDialog extends CsvInputDialog {
 
     private static final Logger log = Logger.getLogger(MS365CsvInputDialog.class.getName());
 
+    private TextVar wFilename = null;
+    private MS36File selectedFile;
     private boolean isInitialized = false;
 
     public MS365CsvInputDialog(Shell parent, Object in, TransMeta tr, String sname) {
@@ -52,7 +54,6 @@ public class MS365CsvInputDialog extends CsvInputDialog {
         log.info("Initiate controls");
         boolean isReceivingInput = this.transMeta.findNrPrevSteps(this.stepMeta) > 0;
 
-        TextVar wFilename = null;
         CCombo cCombo = null;
         if(isReceivingInput){
             log.info("Is Receiving Input");
@@ -76,14 +77,26 @@ public class MS365CsvInputDialog extends CsvInputDialog {
         wbbFilename.addSelectionListener(new SelectionListener() {
             @Override
             public void widgetSelected(SelectionEvent selectionEvent) {
-                ProviderServiceService.get().add(new MS365FileProvider());
+                MS365ConnectionManager connectionManager = MS365ConnectionManager.getInstance();
+                //todo replace in CSV Input
+                GraphConnectionDetails graphConnectionDetails = (GraphConnectionDetails) connectionManager.getConnections().get(0);
+
+                MS365OpenSaveDialog ms365OpenSaveDialog = new MS365OpenSaveDialog(MS365CsvInputDialog.this.shell, WIDTH, HEIGHT, new LogChannel());
+                ProviderServiceService.get()
+                        .add(new MS365FileProvider(graphConnectionDetails.getISharepointConnection(),
+                                () -> ms365OpenSaveDialog.refreshDisplay(false),
+                                ms365OpenSaveDialog::setLoadingVisibility));
                 FileDialogOperation fileDialogOperation = new FileDialogOperation(FileDialogOperation.SELECT_FILE);
                 fileDialogOperation.setProvider(MS365FileProvider.TYPE);
 
-                MS365OpenSaveDialog ms365OpenSaveDialog = new MS365OpenSaveDialog(Spoon.getInstance().getShell(), WIDTH, HEIGHT, new LogChannel());
                 ms365OpenSaveDialog.setProviderFilter(MS365FileProvider.TYPE);
                 ms365OpenSaveDialog.setProvider(MS365FileProvider.TYPE);
                 ms365OpenSaveDialog.open(fileDialogOperation);
+
+                if (ms365OpenSaveDialog.getSelectedFile() != null){
+                    MS365CsvInputDialog.this.selectedFile = ms365OpenSaveDialog.getSelectedFile();
+                    MS365CsvInputDialog.this.wFilename.setText(ms365OpenSaveDialog.getSelectedFile().getPath() + ms365OpenSaveDialog.getSelectedFile().getName());
+                }
             }
 
             @Override

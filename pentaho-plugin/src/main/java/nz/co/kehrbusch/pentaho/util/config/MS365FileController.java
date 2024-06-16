@@ -1,5 +1,6 @@
 package nz.co.kehrbusch.pentaho.util.config;
 
+import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365FileProvider;
 import org.pentaho.di.plugins.fileopensave.api.providers.Tree;
 import org.pentaho.di.plugins.fileopensave.api.providers.exception.InvalidFileProviderException;
 import org.pentaho.di.plugins.fileopensave.cache.FileCache;
@@ -25,12 +26,24 @@ public class MS365FileController extends FileController {
     @Override
     public List<Tree> load(String filter, List<String> connectionTypes){
         List<Tree> trees = new ArrayList<>();
-        if (filter.equalsIgnoreCase(nz.co.kehrbusch.pentaho.util.config.ProviderFilterType.SHAREPOINT.toString())) {
+        if (filter.equalsIgnoreCase(ProviderFilterType.SHAREPOINT.toString())) {
             try {
-                trees.add(providerService.get(nz.co.kehrbusch.pentaho.util.config.ProviderFilterType.SHAREPOINT.toString()).getTree());
+                trees.add(providerService.get(ProviderFilterType.SHAREPOINT.toString()).getTree());
             } catch (InvalidFileProviderException e) {
                 e.printStackTrace();
             }
+        }
+        return trees;
+    }
+
+    public List<Tree> reload(){
+        List<Tree> trees = new ArrayList<>();
+        try {
+            MS365FileProvider fileProvider = (MS365FileProvider) providerService.get(ProviderFilterType.SHAREPOINT.toString());
+            fileProvider.initTree();
+            trees.add(fileProvider.getTree());
+        } catch (InvalidFileProviderException e) {
+            e.printStackTrace();
         }
         return trees;
     }

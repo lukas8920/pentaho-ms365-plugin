@@ -22,11 +22,23 @@
             <groupId>com.microsoft.graph</groupId>
             <artifactId>microsoft-graph</artifactId>
             <version>6.12.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-identity</artifactId>
             <version>1.12.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- Additional dependencies for HTTP and JSON handling -->
         <dependency>
@@ -70,7 +82,7 @@
                         </goals>
                         <configuration>
                             <appendAssemblyId>false</appendAssemblyId>
-                            <outputDirectory>/home/lukas/Downloads/pdi-ce-9.4.0.0-343/data-integration/plugins/ms365-plugin-0.0.1/lib</outputDirectory>
+                            <outputDirectory>/home/lukas/Downloads/pdi-ce-9.4.0.0-343/data-integration/plugins/ms365-plugin-0.0.2/lib</outputDirectory>
                             <finalName>ms365-interface-${project.version}</finalName>
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>

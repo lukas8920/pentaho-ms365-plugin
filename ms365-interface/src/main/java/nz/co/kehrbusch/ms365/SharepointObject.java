@@ -8,7 +8,6 @@ import java.util.List;
 public class SharepointObject implements ISharepointFile {
     private String id;
     private String name;
-    private boolean hasChildren;
     private ISharepointFile parent;
     private int childrenCount = 1;
 
@@ -26,10 +25,9 @@ public class SharepointObject implements ISharepointFile {
         this.children = new ArrayList<>();
     }
 
-    public SharepointObject(String id, String name, ISharepointFile parent, boolean hasChildren){
+    public SharepointObject(String id, String name, ISharepointFile parent){
         this.id = id;
         this.name = name;
-        this.hasChildren = hasChildren;
         this.parent = parent;
         this.children = new ArrayList<>();
     }
@@ -45,18 +43,8 @@ public class SharepointObject implements ISharepointFile {
     }
 
     @Override
-    public boolean hasChildren() {
-        return this.hasChildren;
-    }
-
-    @Override
     public ISharepointFile getParentObject() {
         return this.parent;
-    }
-
-    @Override
-    public List<ISharepointFile> getChildren() {
-        return this.children;
     }
 
     @Override
@@ -66,7 +54,6 @@ public class SharepointObject implements ISharepointFile {
 
     public void setChildrenCount(int childrenCount){
         this.childrenCount = childrenCount;
-        this.hasChildren = childrenCount > 0;
     }
 
     public void addChildren(List<ISharepointFile> iSharepointFiles){
@@ -81,10 +68,6 @@ public class SharepointObject implements ISharepointFile {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public void setHasChildren(boolean hasChildren) {
-        this.hasChildren = hasChildren;
     }
 
     public void setName(String name) {

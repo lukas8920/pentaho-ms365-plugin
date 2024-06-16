@@ -1,10 +1,9 @@
 package nz.co.kehrbusch.pentaho.util.ms365opensavedialog;
 
-
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import nz.co.kehrbusch.pentaho.util.config.MS365FileController;
 import nz.co.kehrbusch.pentaho.util.config.ProviderFilterType;
+import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS36File;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -27,15 +26,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.events.MouseAdapter;
-import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.MouseListener;
-import org.eclipse.swt.events.MouseTrackAdapter;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.events.TraverseEvent;
-import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.events.*;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
@@ -48,17 +39,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.program.Program;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.TableItem;
-import org.eclipse.swt.widgets.Text;
-import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.swt.widgets.TypedListener;
+import org.eclipse.swt.widgets.*;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.SwtUniversalImage;
 import org.pentaho.di.core.logging.LogChannelInterface;
@@ -91,6 +72,7 @@ import org.pentaho.di.ui.core.dialog.ErrorDialog;
 import org.pentaho.di.ui.core.dialog.WarningDialog;
 import org.pentaho.di.ui.core.events.dialog.FilterType;
 import org.pentaho.di.ui.core.gui.GUIResource;
+import org.pentaho.di.ui.spoon.Spoon;
 import org.pentaho.di.ui.util.SwtSvgImageUtil;
 
 import java.io.BufferedReader;
@@ -126,6 +108,7 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
     private static final String PASTE_ACTION_REPLACE = "replace";
     private static final String PASTE_ACTION_KEEP_BOTH = "keep-both";
     private FilterFileType[] validFileTypes;
+    private MS36File selectedFile;
     private String shellTitle = "Open";
     private String objectId;
     private String name;
@@ -156,6 +139,7 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
 
     private static final MS365FileController FILE_CONTROLLER;
 
+    private Label lblLoadingInfo;
     private Label lblComboFilter;
 
     private TypedComboBox<FilterFileType> typedComboBox;
@@ -190,8 +174,6 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
 
 
     // Top Right Buttons
-    private FlatButton flatBtnRefresh;
-
     private FlatButton flatBtnBack;
 
     private FlatButton flatBtnForward;
@@ -226,7 +208,6 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
     }
 
     public void open( FileDialogOperation fileDialogOperation ) {
-
         this.fileDialogOperation = fileDialogOperation;
         command = fileDialogOperation.getCommand();
         shellTitle = BaseMessages.getString( PKG, "FileOpenSaveDialog.dialog." + command + ".title" );
@@ -389,6 +370,13 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
         lblComboFilter = new Label( parent, SWT.NONE );
         lblComboFilter.setText( BaseMessages.getString( PKG, "file-open-save-plugin.app.save.file-filter.label" ) );
         PropsUI.getInstance().setLook( lblComboFilter );
+
+        lblLoadingInfo = new Label(parent, SWT.NONE);
+        lblLoadingInfo.setText(BaseMessages.getString(PKG, "file-open-save-plugin.app.save.loading"));
+        PropsUI.getInstance().setLook(lblLoadingInfo);
+
+        lblLoadingInfo.setLayoutData(
+                new FormDataBuilder().top(select, 28).left(flatBtnHelp.label, 60).result());
 
         btnCancel = new Button( parent, SWT.NONE );
         PropsUI.getInstance().setLook( btnCancel );
@@ -607,6 +595,7 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
                 .right( lblComboFilter, -15 ).result() );
         lblComboFilter.setLayoutData(
                 new FormDataBuilder().top( select, 20 ).right( typedComboBox.viewer.getCombo(), -5 ).result() );
+
         typedComboBox.viewer.getCombo()
                 .setLayoutData( new FormDataBuilder().top( select, 20 ).right( btnSave, -15 ).result() );
 
@@ -766,17 +755,6 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
         fileButtons.setLayout( new RowLayout() );
         fileButtons.setLayoutData( new FormDataBuilder().right( 100, 0 ).result() );
 
-        flatBtnRefresh =
-                new FlatButton( fileButtons, SWT.NONE ).setEnabledImage( rasterImage( "img/Refresh.S_D.svg", 32, 32 ) )
-                        .setDisabledImage( rasterImage( "img/Refresh.S_D_disabled.svg", 32, 32 ) )
-                        .setToolTipText( BaseMessages.getString( PKG, "file-open-save-plugin.app.refresh.button" ) )
-                        .setLayoutData( new RowData() ).setEnabled( true ).addListener( new SelectionAdapter() {
-                            @Override
-                            public void widgetSelected( SelectionEvent selectionEvent ) {
-                                refreshDisplay( selectionEvent );
-                            }
-                        } );
-
         txtNav = new Text( buttons, SWT.BORDER );
 
         this.txtNav.setEditable( true );
@@ -901,7 +879,8 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
         return file;
     }
 
-    private void refreshDisplay( SelectionEvent selectionEvent ) {
+    public void refreshDisplay(boolean hasToReloadFromServer) {
+        if (this.getShell().isDisposed()) return;
         StructuredSelection fileTableViewerSelection = (StructuredSelection) ( fileTableViewer.getSelection() );
         TreeSelection treeViewerSelection = (TreeSelection) ( treeViewer.getSelection() );
         FileProvider fileProvider = null;
@@ -943,7 +922,11 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
             try {
                 fileProvider = ProviderServiceService.get().get( fileDialogOperation.getProvider() );
                 fileProvider.clearProviderCache();
-                treeViewer.setInput( FILE_CONTROLLER.load( ProviderFilterType.ALL_PROVIDERS.toString() ).toArray() );
+                if (hasToReloadFromServer){
+                    treeViewer.setInput(FILE_CONTROLLER.reload().toArray());
+                } else {
+                    treeViewer.setInput( FILE_CONTROLLER.load( ProviderFilterType.ALL_PROVIDERS.toString() ).toArray() );
+                }
                 treeViewer.refresh( true );
                 fileTableViewer.refresh( true );
             } catch ( Exception ex ) {
@@ -1262,6 +1245,18 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
         }
     }
 
+    public void setLoadingVisibility(boolean visible){
+        Shell shell = this.getShell();
+        if (shell != null && !shell.isDisposed()){
+            Display display = shell.getDisplay();
+            display.asyncExec(() -> {
+                if (this.lblLoadingInfo != null){
+                    this.lblLoadingInfo.setVisible(visible);
+                }
+            });
+        }
+    }
+
     private boolean isSaveState() {
         return fileDialogOperation.isSaveCommand();
     }
@@ -1350,6 +1345,8 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
         name = f.getName();
         connection = ( f instanceof VFSFile ) ? ( (VFSFile) f ).getConnection() : null;
         objectId = ( f instanceof RepositoryFile ) ? ( (RepositoryFile) f ).getObjectId() : null;
+
+        selectedFile = (f instanceof MS36File) ? (MS36File) f : null;
 
         if ( isSaveState() ) {
             path = ( f instanceof Directory ) ? f.getPath() : f.getParent();
@@ -1576,6 +1573,10 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
 
     protected LogChannelInterface getLog() {
         return log;
+    }
+
+    public MS36File getSelectedFile() {
+        return selectedFile;
     }
 
     protected static class FlatButton {
