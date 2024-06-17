@@ -1,30 +1,37 @@
 package nz.co.kehrbusch.pentaho.trans.csvinput;
 
+import nz.co.kehrbusch.pentaho.connections.manage.ConnectionDetailsInterface;
 import nz.co.kehrbusch.pentaho.connections.manage.GraphConnectionDetails;
 import nz.co.kehrbusch.pentaho.connections.manage.MS365ConnectionManager;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.MS365OpenSaveDialog;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365FileProvider;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS36File;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Label;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.logging.LogChannel;
+import org.pentaho.di.core.row.value.ValueMetaFactory;
+import org.pentaho.di.core.row.value.ValueMetaString;
+import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.plugins.fileopensave.service.ProviderServiceService;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.ui.core.FileDialogOperation;
+import org.pentaho.di.ui.core.widget.ColumnInfo;
+import org.pentaho.di.ui.core.widget.ComboValuesSelectionListener;
+import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.core.widget.TextVar;
+import org.pentaho.di.ui.trans.step.BaseStepDialog;
 import org.pentaho.di.ui.trans.steps.csvinput.CsvInputDialog;
 
-import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
-import java.awt.*;
-import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -35,12 +42,22 @@ public class MS365CsvInputDialog extends CsvInputDialog {
 
     private static final Logger log = Logger.getLogger(MS365CsvInputDialog.class.getName());
 
+    private final MS365ConnectionManager connectionManager;
+    private final MS365CsvInputMeta ms365CsvInputMeta;
+
     private TextVar wFilename = null;
+    private CCombo wConnectionField;
+
     private MS36File selectedFile;
+
     private boolean isInitialized = false;
+    private String[] connections;
 
     public MS365CsvInputDialog(Shell parent, Object in, TransMeta tr, String sname) {
         super(parent, in, tr, sname);
+        this.connectionManager = MS365ConnectionManager.getInstance();
+        this.ms365CsvInputMeta = (MS365CsvInputMeta) in;
+        this.baseStepMeta = (MS365CsvInputMeta) in;
     }
 
     public String open(){
@@ -51,12 +68,12 @@ public class MS365CsvInputDialog extends CsvInputDialog {
     private void addControls(){
         Control[] controls = this.shell.getChildren();
         int margin = 4;
-        log.info("Initiate controls");
+        int middle = this.props.getMiddlePct();
         boolean isReceivingInput = this.transMeta.findNrPrevSteps(this.stepMeta) > 0;
 
         CCombo cCombo = null;
+        Label wlFilename = (Label) Arrays.stream(controls).filter(control -> control instanceof Label).collect(Collectors.toList()).get(1);
         if(isReceivingInput){
-            log.info("Is Receiving Input");
             cCombo = (CCombo) Arrays.stream(controls).filter(control -> control instanceof CCombo).collect(Collectors.toList()).get(0);
         } else {
             wFilename = (TextVar) Arrays.stream(controls).filter(control -> control instanceof TextVar).collect(Collectors.toList()).get(0);
@@ -65,21 +82,90 @@ public class MS365CsvInputDialog extends CsvInputDialog {
         Button wbbFilename = (Button) Arrays.stream(controls).filter(control -> control instanceof Button && ((Button) control).getText().equals(BaseMessages.getString(PKG, "System.Button.Browse", new String[0])))
                 .findFirst().orElse(null);
 
+        Label wlConnection = new Label(this.shell, 131072);
+        wlConnection.setText(BaseMessages.getString(PKG, this.ms365CsvInputMeta.getDescription("CONNECTION_NAME")));
+        this.props.setLook(wlConnection);
+        FormData fdlConnection = new FormData();
+        fdlConnection.top = new FormAttachment(wStepname, margin);
+        fdlConnection.left = new FormAttachment(0, 0);
+        fdlConnection.right = new FormAttachment(middle, -margin);
+        wlConnection.setLayoutData(fdlConnection);
+        wConnectionField = new CCombo(this.shell, 18436);
+        connections = connectionManager.getConnections().stream().map(ConnectionDetailsInterface::getConnectionName).toArray(String[]::new);
+        wConnectionField.setItems(connections);
+        this.props.setLook(wConnectionField);
+        wConnectionField.addModifyListener(modifyEvent -> {
+            this.ms365CsvInputMeta.setChanged();
+        });
+        fdlConnection = new FormData();
+        fdlConnection.top = new FormAttachment(wStepname, margin);
+        fdlConnection.left = new FormAttachment(middle, 0);
+        fdlConnection.right = new FormAttachment(100, 0);
+        wConnectionField.setLayoutData(fdlConnection);
+
         wbbFilename.dispose();
         wbbFilename = new Button(this.shell, 16777224);
         this.props.setLook(wbbFilename);
         wbbFilename.setText(BaseMessages.getString(PKG, "System.Button.Browse", new String[0]));
         wbbFilename.setToolTipText(BaseMessages.getString(PKG, "System.Tooltip.BrowseForFileOrDirAndAdd", new String[0]));
         FormData fdbFilename = new FormData();
-        fdbFilename.top = new FormAttachment(wStepname, margin);
+        fdbFilename.top = new FormAttachment(wConnectionField, margin);
         fdbFilename.right = new FormAttachment(100, 0);
         wbbFilename.setLayoutData(fdbFilename);
-        wbbFilename.addSelectionListener(new SelectionListener() {
-            @Override
-            public void widgetSelected(SelectionEvent selectionEvent) {
-                MS365ConnectionManager connectionManager = MS365ConnectionManager.getInstance();
-                //todo replace in CSV Input
-                GraphConnectionDetails graphConnectionDetails = (GraphConnectionDetails) connectionManager.getConnections().get(0);
+        wbbFilename.addSelectionListener(selectFileListener);
+
+        fdbFilename = new FormData();
+        fdbFilename.top = new FormAttachment(wConnectionField, margin);
+        fdbFilename.left = new FormAttachment(0, 0);
+        fdbFilename.right = new FormAttachment(middle, -margin);
+        wlFilename.setLayoutData(fdbFilename);
+        if (isReceivingInput){
+            FormData formData = (FormData) cCombo.getLayoutData();
+            formData.top = new FormAttachment(wConnectionField, margin);
+            cCombo.setLayoutData(formData);
+        } else {
+            FormData formData = (FormData) wFilename.getLayoutData();
+            formData.top = new FormAttachment(wConnectionField, margin);
+            formData.right = new FormAttachment(wbbFilename, -margin);
+            wFilename.setLayoutData(formData);
+        }
+
+        Listener[] listeners = this.wOK.getListeners(13);
+        Listener overwriteListener = event -> {
+              MS365CsvInputDialog.this.ok();
+              listeners[0].handleEvent(event);
+        };
+        this.wOK.removeListener(13, listeners[0]);
+        this.wOK.addListener(13, overwriteListener);
+
+        populateDialog();
+    }
+
+    private void ok(){
+        if (!Utils.isEmpty(this.wStepname.getText())) {
+            this.ms365CsvInputMeta.setConnectionName(this.wConnectionField.getText());
+        }
+    }
+
+    private void populateDialog(){
+        wConnectionField.setText(ms365CsvInputMeta.getConnectionName());
+        if (connections.length > 0 && wConnectionField.getText().length() < 1){
+            wConnectionField.setText(connections[0]);
+        }
+    }
+
+    public void attachAdditionalFields(){
+        if (!this.isInitialized){
+            addControls();
+            this.isInitialized = true;
+        }
+    }
+
+    SelectionListener selectFileListener = new SelectionListener() {
+        @Override
+        public void widgetSelected(SelectionEvent selectionEvent) {
+            if (connections.length > 0 && wConnectionField.getText().length() > 0){
+                GraphConnectionDetails graphConnectionDetails = (GraphConnectionDetails) connectionManager.provideDetailsByConnectionName(wConnectionField.getText());
 
                 MS365OpenSaveDialog ms365OpenSaveDialog = new MS365OpenSaveDialog(MS365CsvInputDialog.this.shell, WIDTH, HEIGHT, new LogChannel());
                 ProviderServiceService.get()
@@ -97,59 +183,20 @@ public class MS365CsvInputDialog extends CsvInputDialog {
                     MS365CsvInputDialog.this.selectedFile = ms365OpenSaveDialog.getSelectedFile();
                     MS365CsvInputDialog.this.wFilename.setText(ms365OpenSaveDialog.getSelectedFile().getPath() + ms365OpenSaveDialog.getSelectedFile().getName());
                 }
+            } else if (!(connections.length > 0)){
+                MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
+                mb.setMessage(BaseMessages.getString(PKG, "MS365CsvInput.NoConnectionCreated.Error"));
+                mb.open();
+            } else {
+                MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
+                mb.setMessage(BaseMessages.getString(PKG, "MS365CsvInput.NoConnectionChosen.Error"));
+                mb.open();
             }
-
-            @Override
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-
-            }
-        });
-
-        if (isReceivingInput){
-            FormData formData = (FormData) cCombo.getLayoutData();
-            formData.top = new FormAttachment(wStepname, margin);
-            cCombo.setLayoutData(formData);
-        } else {
-            FormData formData = (FormData) wFilename.getLayoutData();
-            formData.top = new FormAttachment(wStepname, margin);
-            formData.right = new FormAttachment(wbbFilename, -margin);
-            wFilename.setLayoutData(formData);
         }
-    }
 
-    public void attachAdditionalFields(){
-        log.info("Call read controls.");
-        if (!this.isInitialized){
-            addControls();
-            this.isInitialized = true;
+        @Override
+        public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+
         }
-    }
-
-    private File openFileChooser() {
-        JFrame mainWindow = new JFrame();
-        mainWindow.setSize( 750, 700 );
-        mainWindow.setTitle( "Hitachi Vantara - Update Jobs and Transformations for import into Data Flow Manager" );
-        mainWindow.setLocationRelativeTo( null );
-        mainWindow.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setAcceptAllFileFilterUsed( false );
-        fileChooser.setPreferredSize( new Dimension( 750, 400 ) );
-        fileChooser.setCurrentDirectory( new File( "." ) );
-        fileChooser.setFileSelectionMode( JFileChooser.FILES_AND_DIRECTORIES );
-        fileChooser.addChoosableFileFilter( new FileFilter() {
-            public String getDescription() {
-                return "Kettle Transformations (*.ktr) and Kettle Jobs (*.kjb)";
-            }
-
-            public boolean accept( File file ) {
-                if ( file.isDirectory() ) {
-                    return true;
-                } else {
-                    return file.getName().toLowerCase().endsWith( ".ktr" ) || file.getName().toLowerCase().endsWith( ".kjb" );
-                }
-            }
-        } );
-        return fileChooser.showOpenDialog( mainWindow ) == JFileChooser.APPROVE_OPTION ? fileChooser.getSelectedFile()
-                : null;
-    }
+    };
 }

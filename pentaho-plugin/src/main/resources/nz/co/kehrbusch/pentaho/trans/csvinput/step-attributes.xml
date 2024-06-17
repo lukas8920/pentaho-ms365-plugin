@@ -1,6 +1,7 @@
 <attributes>
 
     <!-- Top level attributes -->
+    <attribute id="CONNECTION_NAME"><xmlcode>connection_name</xmlcode><description>MS365CsvInput.Connection.Label</description><tooltip/></attribute>
     <attribute id="FILENAME"> <xmlcode>filename</xmlcode> <repcode/> <description>CsvInputDialog.Filename.Label</description> <tooltip/> <valuetype>String</valuetype> <parentid/> </attribute>
     <attribute id="FILENAME_FIELD"> <xmlcode>filename_field</xmlcode> <repcode/> <description>CsvInputDialog.FilenameField.Label</description> <tooltip/> <valuetype>String</valuetype> <parentid/></attribute>
     <attribute id="INCLUDE_FILENAME"> <xmlcode>include_filename</xmlcode>  <repcode/> <description>CsvInputDialog.IncludeFilenameField.Label</description> <tooltip/> <valuetype>Boolean</valuetype> <parentid/></attribute>

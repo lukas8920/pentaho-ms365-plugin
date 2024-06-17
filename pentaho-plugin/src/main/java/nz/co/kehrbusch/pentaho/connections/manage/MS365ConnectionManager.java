@@ -18,8 +18,8 @@ public class MS365ConnectionManager {
     private static MS365ConnectionManager connectionManager = null;
 
     private final List<ConnectionTypeInterface> connectionTypeInterfaces;
-    private final List<ConnectionDetailsInterface> liveConnectionDetailsInterfaces;
 
+    private List<ConnectionDetailsInterface> liveConnectionDetailsInterfaces;
     private List<ConnectionDetailsInterface> existingConnectionDetailsInterfaces;
     private String repoFilename = "";
 
@@ -31,20 +31,24 @@ public class MS365ConnectionManager {
     }
 
     public void initConnections(){
-        Spoon spoon = Spoon.getInstance();
-        Repository repository = spoon.getRepository();
-        try {
-            repoFilename = FileRepository.calcDirectoryName(repository.getUserHomeDirectory(), repository.getRepositoryMeta()) + "ms365-connections.xml";
-            log.info("Repo filename is: " + repoFilename);
-            FileRepository.readFileXMLConnections(this, repoFilename, new FileRepository.ResponseHandler() {
-                @Override
-                public void onResponse(List<ConnectionDetailsInterface> detailsInterfaces) {
-                    MS365ConnectionManager.this.liveConnectionDetailsInterfaces.addAll(detailsInterfaces);
-                    refreshMenu();
-                }
-            });
-        } catch (KettleException e) {
-            e.printStackTrace();
+        if (this.liveConnectionDetailsInterfaces.isEmpty()){
+            this.liveConnectionDetailsInterfaces = new ArrayList<>();
+            this.existingConnectionDetailsInterfaces = new ArrayList<>();
+            Spoon spoon = Spoon.getInstance();
+            Repository repository = spoon.getRepository();
+            try {
+                repoFilename = FileRepository.calcDirectoryName(repository.getUserHomeDirectory(), repository.getRepositoryMeta()) + "ms365-connections.xml";
+                log.info("Repo filename is: " + repoFilename);
+                FileRepository.readFileXMLConnections(this, repoFilename, new FileRepository.ResponseHandler() {
+                    @Override
+                    public void onResponse(List<ConnectionDetailsInterface> detailsInterfaces) {
+                        MS365ConnectionManager.this.liveConnectionDetailsInterfaces.addAll(detailsInterfaces);
+                        refreshMenu();
+                    }
+                });
+            } catch (KettleException e) {
+                e.printStackTrace();
+            }
         }
     }
 
