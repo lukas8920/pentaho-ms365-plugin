@@ -1,15 +1,20 @@
 package nz.co.kehrbusch.ms365;
 
+import nz.co.kehrbusch.ms365.interfaces.entities.Counter;
+import nz.co.kehrbusch.ms365.interfaces.entities.ICountableSharepointFile;
 import nz.co.kehrbusch.ms365.interfaces.entities.ISharepointFile;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SharepointObject implements ISharepointFile {
+public class SharepointObject implements ICountableSharepointFile {
     private String id;
     private String name;
     private ISharepointFile parent;
     private int childrenCount = 1;
+    private int size;
+    private Counter fileCounter;
+    private Counter partCounter;
 
     private final List<ISharepointFile> children;
 
@@ -52,6 +57,15 @@ public class SharepointObject implements ISharepointFile {
         return this.childrenCount;
     }
 
+    @Override
+    public int getSize() {
+        return this.size;
+    }
+
+    public void setSize(int size){
+        this.size = size;
+    }
+
     public void setChildrenCount(int childrenCount){
         this.childrenCount = childrenCount;
     }
@@ -72,5 +86,25 @@ public class SharepointObject implements ISharepointFile {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public Counter getFileCounter() {
+        return this.fileCounter;
+    }
+
+    @Override
+    public void setFileCounter(Counter fileCounter) {
+        this.fileCounter = fileCounter;
+    }
+
+    @Override
+    public Counter getPartCounter() {
+        return this.partCounter;
+    }
+
+    @Override
+    public void setPartCounter(Counter partCounter) {
+        this.partCounter = partCounter;
     }
 }

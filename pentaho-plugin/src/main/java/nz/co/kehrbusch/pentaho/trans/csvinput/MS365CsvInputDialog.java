@@ -5,7 +5,7 @@ import nz.co.kehrbusch.pentaho.connections.manage.GraphConnectionDetails;
 import nz.co.kehrbusch.pentaho.connections.manage.MS365ConnectionManager;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.MS365OpenSaveDialog;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365FileProvider;
-import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS36File;
+import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365File;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.events.*;
@@ -16,22 +16,15 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Label;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.logging.LogChannel;
-import org.pentaho.di.core.row.value.ValueMetaFactory;
-import org.pentaho.di.core.row.value.ValueMetaString;
 import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.plugins.fileopensave.service.ProviderServiceService;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.ui.core.FileDialogOperation;
-import org.pentaho.di.ui.core.widget.ColumnInfo;
-import org.pentaho.di.ui.core.widget.ComboValuesSelectionListener;
-import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.core.widget.TextVar;
-import org.pentaho.di.ui.trans.step.BaseStepDialog;
 import org.pentaho.di.ui.trans.steps.csvinput.CsvInputDialog;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -48,7 +41,7 @@ public class MS365CsvInputDialog extends CsvInputDialog {
     private TextVar wFilename = null;
     private CCombo wConnectionField;
 
-    private MS36File selectedFile;
+    private MS365File selectedFile;
 
     private boolean isInitialized = false;
     private String[] connections;
@@ -148,8 +141,9 @@ public class MS365CsvInputDialog extends CsvInputDialog {
     }
 
     private void populateDialog(){
-        wConnectionField.setText(ms365CsvInputMeta.getConnectionName());
-        if (connections.length > 0 && wConnectionField.getText().length() < 1){
+        if (ms365CsvInputMeta.getConnectionName() != null){
+            wConnectionField.setText(ms365CsvInputMeta.getConnectionName());
+        } else {
             wConnectionField.setText(connections[0]);
         }
     }

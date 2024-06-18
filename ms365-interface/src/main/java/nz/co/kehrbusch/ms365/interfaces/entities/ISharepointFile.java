@@ -5,4 +5,5 @@ public interface ISharepointFile {
     String getName();
     ISharepointFile getParentObject();
     int getChildrenCount();
+    int getSize();
 }

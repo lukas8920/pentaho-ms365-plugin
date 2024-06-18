@@ -44,7 +44,7 @@ public class MS365Directory extends BaseEntity implements Directory {
                         ms365Directory.setChildrenCount(sharepointFile.getChildrenCount());
                         return ms365Directory;
                     } else {
-                        MS36File ms36File = new MS36File();
+                        MS365File ms36File = new MS365File();
                         ms36File.setId(sharepointFile.getId());
                         ms36File.setName(sharepointFile.getName());
                         ms36File.setParent(MS365Directory.this);

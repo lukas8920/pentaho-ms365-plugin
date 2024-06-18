@@ -23,6 +23,7 @@ public abstract class BaseEntity implements Entity, Providerable, File, ISharepo
     private BaseEntity parent = null;
     private int childrenCount;
     private boolean hasInitChildren = false;
+    private int size;
 
     protected final List<BaseEntity> children = new ArrayList<>();
     
@@ -114,4 +115,11 @@ public abstract class BaseEntity implements Entity, Providerable, File, ISharepo
     public abstract void setName(String name);
 
     public abstract String getName();
+
+    public void setSize(int size) {
+        this.size = size;
+    }
+    public int getSize(){
+        return this.size;
+    }
 }

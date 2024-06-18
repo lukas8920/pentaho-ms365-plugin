@@ -3,7 +3,7 @@ package nz.co.kehrbusch.pentaho.util.ms365opensavedialog;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import nz.co.kehrbusch.pentaho.util.config.MS365FileController;
 import nz.co.kehrbusch.pentaho.util.config.ProviderFilterType;
-import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS36File;
+import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365File;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -72,7 +72,6 @@ import org.pentaho.di.ui.core.dialog.ErrorDialog;
 import org.pentaho.di.ui.core.dialog.WarningDialog;
 import org.pentaho.di.ui.core.events.dialog.FilterType;
 import org.pentaho.di.ui.core.gui.GUIResource;
-import org.pentaho.di.ui.spoon.Spoon;
 import org.pentaho.di.ui.util.SwtSvgImageUtil;
 
 import java.io.BufferedReader;
@@ -108,7 +107,7 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
     private static final String PASTE_ACTION_REPLACE = "replace";
     private static final String PASTE_ACTION_KEEP_BOTH = "keep-both";
     private FilterFileType[] validFileTypes;
-    private MS36File selectedFile;
+    private MS365File selectedFile;
     private String shellTitle = "Open";
     private String objectId;
     private String name;
@@ -1346,7 +1345,7 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
         connection = ( f instanceof VFSFile ) ? ( (VFSFile) f ).getConnection() : null;
         objectId = ( f instanceof RepositoryFile ) ? ( (RepositoryFile) f ).getObjectId() : null;
 
-        selectedFile = (f instanceof MS36File) ? (MS36File) f : null;
+        selectedFile = (f instanceof MS365File) ? (MS365File) f : null;
 
         if ( isSaveState() ) {
             path = ( f instanceof Directory ) ? f.getPath() : f.getParent();
@@ -1575,7 +1574,7 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
         return log;
     }
 
-    public MS36File getSelectedFile() {
+    public MS365File getSelectedFile() {
         return selectedFile;
     }
 
