@@ -74,6 +74,12 @@ public class MS365CsvInputDialog extends CsvInputDialog {
 
         Button wbbFilename = (Button) Arrays.stream(controls).filter(control -> control instanceof Button && ((Button) control).getText().equals(BaseMessages.getString(PKG, "System.Button.Browse", new String[0])))
                 .findFirst().orElse(null);
+        Label wlAddResult = (Label) Arrays.stream(controls).filter(control -> control instanceof Label && ((Label) control).getText().equals(BaseMessages.getString(PKG, this.ms365CsvInputMeta.getDescription("ADD_FILENAME_RESULT"), new String[0]))).findFirst().orElse(null);
+        Button wAddResult = (Button) Arrays.stream(controls).filter(control -> control instanceof Button && control.getToolTipText() != null && control.getToolTipText().equals(BaseMessages.getString(PKG, this.ms365CsvInputMeta.getTooltip("ADD_FILENAME_RESULT"), new String[0]))).findFirst().orElse(null);;
+        Label wlRowNumField = (Label) Arrays.stream(controls).filter(control -> control instanceof Label && ((Label) control).getText().equals(BaseMessages.getString(PKG, this.ms365CsvInputMeta.getDescription("ROW_NUM_FIELD"), new String[0]))).findFirst().orElse(null);
+        Button wHeaderPresent = (Button) ((FormData) wAddResult.getLayoutData()).top.control;
+        Label wlRunningInParallel = (Label) Arrays.stream(controls).filter(control -> control instanceof Label && ((Label) control).getText().equals(BaseMessages.getString(PKG, this.ms365CsvInputMeta.getDescription("PARALLEL"), new String[0]))).findFirst().orElse(null);;
+        TextVar wRowNumField = (TextVar) ((FormData) wlRunningInParallel.getLayoutData()).top.control;
 
         Label wlConnection = new Label(this.shell, 131072);
         wlConnection.setText(BaseMessages.getString(PKG, this.ms365CsvInputMeta.getDescription("CONNECTION_NAME")));
@@ -130,6 +136,18 @@ public class MS365CsvInputDialog extends CsvInputDialog {
         };
         this.wOK.removeListener(13, listeners[0]);
         this.wOK.addListener(13, overwriteListener);
+
+        wlAddResult.dispose();
+        //keep, but hide, Button to avoid NullPointerExceptions
+        wAddResult = new Button(this.shell, 32);
+        wAddResult.setVisible(false);
+
+        FormData formData = (FormData) wlRowNumField.getLayoutData();
+        formData.top = new FormAttachment(wHeaderPresent, margin);
+        wlRowNumField.setLayoutData(formData);
+        formData = (FormData) wRowNumField.getLayoutData();
+        formData.top = new FormAttachment(wHeaderPresent, margin);
+        wRowNumField.setLayoutData(formData);
 
         populateDialog();
     }

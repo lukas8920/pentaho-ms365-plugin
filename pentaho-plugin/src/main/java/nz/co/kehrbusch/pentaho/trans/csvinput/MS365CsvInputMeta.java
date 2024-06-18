@@ -23,7 +23,7 @@ import java.util.logging.Logger;
         id = "MS365CsvInput",
         name = "MS365CsvInput.Name",
         description = "MS365CsvInput.TooltipDesc",
-        image = "images/environments.svg",
+        image = "images/CSV.svg",
         categoryDescription = "i18n:org.pentaho.di.trans.step:BaseStep.Category.Input",
         i18nPackageName = "nz.co.kehrbusch.pentaho.trans.csvinput",
         documentationUrl = "MS365CsvInput.DocumentationURL"
