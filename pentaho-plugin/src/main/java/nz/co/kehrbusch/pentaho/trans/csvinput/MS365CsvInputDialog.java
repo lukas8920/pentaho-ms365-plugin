@@ -1,8 +1,10 @@
 package nz.co.kehrbusch.pentaho.trans.csvinput;
 
+import nz.co.kehrbusch.ms365.interfaces.entities.IStreamProvider;
 import nz.co.kehrbusch.pentaho.connections.manage.ConnectionDetailsInterface;
 import nz.co.kehrbusch.pentaho.connections.manage.GraphConnectionDetails;
 import nz.co.kehrbusch.pentaho.connections.manage.MS365ConnectionManager;
+import nz.co.kehrbusch.pentaho.util.file.SharepointFileWrapper;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.MS365OpenSaveDialog;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365FileProvider;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365File;
@@ -20,10 +22,15 @@ import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.plugins.fileopensave.service.ProviderServiceService;
 import org.pentaho.di.trans.TransMeta;
+import org.pentaho.di.trans.steps.common.CsvInputAwareMeta;
 import org.pentaho.di.ui.core.FileDialogOperation;
 import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.steps.csvinput.CsvInputDialog;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -42,6 +49,7 @@ public class MS365CsvInputDialog extends CsvInputDialog {
     private CCombo wConnectionField;
 
     private MS365File selectedFile;
+    private Label lblLoadingInfo;
 
     private boolean isInitialized = false;
     private String[] connections;
@@ -71,6 +79,10 @@ public class MS365CsvInputDialog extends CsvInputDialog {
         } else {
             wFilename = (TextVar) Arrays.stream(controls).filter(control -> control instanceof TextVar).collect(Collectors.toList()).get(0);
         }
+
+        this.wGet.setVisible(false);
+        this.wGet.removeListener(13, super.lsGet);
+        this.wGet.addListener(13, lsGet);
 
         Button wbbFilename = (Button) Arrays.stream(controls).filter(control -> control instanceof Button && ((Button) control).getText().equals(BaseMessages.getString(PKG, "System.Button.Browse", new String[0])))
                 .findFirst().orElse(null);
@@ -137,10 +149,20 @@ public class MS365CsvInputDialog extends CsvInputDialog {
         this.wOK.removeListener(13, listeners[0]);
         this.wOK.addListener(13, overwriteListener);
 
+        this.wFilename.addModifyListener(this.modifyListener);
+
         wlAddResult.dispose();
         //keep, but hide, Button to avoid NullPointerExceptions
-        wAddResult = new Button(this.shell, 32);
         wAddResult.setVisible(false);
+
+        lblLoadingInfo = new Label(this.shell, 131072);
+        lblLoadingInfo.setText(BaseMessages.getString(PKG, "MS365CsvInput.Loading.Label"));
+        props.setLook(lblLoadingInfo);
+        FormData fbdLoading = new FormData();
+        fbdLoading.bottom = new FormAttachment(100, -7);
+        fbdLoading.left = new FormAttachment(wCancel, 80);
+        lblLoadingInfo.setLayoutData(fbdLoading);
+        lblLoadingInfo.setVisible(false);
 
         FormData formData = (FormData) wlRowNumField.getLayoutData();
         formData.top = new FormAttachment(wHeaderPresent, margin);
@@ -173,6 +195,33 @@ public class MS365CsvInputDialog extends CsvInputDialog {
         }
     }
 
+    Listener lsGet = event -> {
+        this.lblLoadingInfo.setVisible(true);
+        super.lsGet.handleEvent(event);
+        this.lblLoadingInfo.setVisible(false);
+    };
+
+    @Override
+    public InputStream getInputStream(CsvInputAwareMeta meta){
+        IStreamProvider iStreamProvider = this.selectedFile;
+        InputStream inputStream = new ByteArrayInputStream(new byte[0]);
+
+        try {
+            GraphConnectionDetails graphConnectionDetails = (GraphConnectionDetails) this.connectionManager.provideDetailsByConnectionName(this.wConnectionField.getText());
+            inputStream = iStreamProvider.getInputStream(graphConnectionDetails.getISharepointConnection());
+        } catch (IOException e){
+            logError("No input stream could be received from the server.");
+            return new BufferedInputStream(inputStream);
+        }
+
+        return inputStream;
+    }
+
+    ModifyListener modifyListener = modifyEvent -> {
+        this.wGet.setVisible(this.selectedFile != null &&
+                (this.selectedFile.getPath() + this.selectedFile.getName()).equals(this.wFilename.getText()));
+    };
+
     SelectionListener selectFileListener = new SelectionListener() {
         @Override
         public void widgetSelected(SelectionEvent selectionEvent) {
@@ -194,6 +243,7 @@ public class MS365CsvInputDialog extends CsvInputDialog {
                 if (ms365OpenSaveDialog.getSelectedFile() != null){
                     MS365CsvInputDialog.this.selectedFile = ms365OpenSaveDialog.getSelectedFile();
                     MS365CsvInputDialog.this.wFilename.setText(ms365OpenSaveDialog.getSelectedFile().getPath() + ms365OpenSaveDialog.getSelectedFile().getName());
+                    MS365CsvInputDialog.this.wGet.setVisible(true);
                 }
             } else if (!(connections.length > 0)){
                 MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
@@ -211,4 +261,16 @@ public class MS365CsvInputDialog extends CsvInputDialog {
 
         }
     };
+
+    @Override
+    public void dispose(){
+        if (this.selectedFile != null){
+            try {
+                this.selectedFile.disposeInputStream();
+            } catch (IOException e) {
+                logError("Error while disposing the inputstream for the file");
+            }
+        }
+        super.dispose();
+    }
 }
