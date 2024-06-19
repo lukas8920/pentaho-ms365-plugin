@@ -9,6 +9,7 @@ import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
+import org.pentaho.di.ui.spoon.Spoon;
 
 import java.io.*;
 import java.nio.file.InvalidPathException;
@@ -28,14 +29,21 @@ public class MS365CsvInput extends MS365BaseCsvInput {
     @Override
     public void initConnection(MS365CsvInputMeta ms365CsvInputMeta){
         this.ms365CsvInputMeta = ms365CsvInputMeta;
-        MS365ConnectionManager connectionManager = MS365ConnectionManager.getInstance();
+
+        MS365ConnectionManager connectionManager = MS365ConnectionManager.getInstance(this.getLogChannel());
+        if (Spoon.getInstance() == null){
+            connectionManager.initConnections(this.repository);
+        } else {
+            connectionManager.initConnections();
+        }
+
         this.graphConnectionDetails = (GraphConnectionDetails) connectionManager.provideDetailsByConnectionName(this.ms365CsvInputMeta.getConnectionName());
-        this.sharepointFileWrapper = new SharepointFileWrapper(this.ms365CsvInputMeta, graphConnectionDetails.getISharepointConnection());
+        this.sharepointFileWrapper = new SharepointFileWrapper(this.ms365CsvInputMeta, graphConnectionDetails.getISharepointConnection(), this.getLogChannel());
     }
 
     @Override
     public InputStream getInputStream(String filename){
-        log.info("Get input stream for: " + filename);
+        logBasic("Get input stream for: " + filename);
         IStreamProvider iStreamProvider;
         InputStream inputStream = new ByteArrayInputStream(new byte[0]);;
 

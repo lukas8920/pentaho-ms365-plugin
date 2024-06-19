@@ -6,6 +6,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
+import org.pentaho.di.core.logging.LogChannelInterface;
 import org.pentaho.di.ui.core.PropsUI;
 
 public class GraphConnectionType implements ConnectionTypeInterface {
@@ -15,8 +16,6 @@ public class GraphConnectionType implements ConnectionTypeInterface {
     private static final String SCOPE_URL = "https://graph.microsoft.com/.default";
 
     private static GraphConnectionType graphConnectionType = null;
-
-    private final MS365DetailsCompositeHelper helper;
 
     private Text scopeText;
     private Text tenantIdText;
@@ -28,14 +27,15 @@ public class GraphConnectionType implements ConnectionTypeInterface {
     private Label clientIdLabel;
     private Label clientSecretLabel;
 
-    private GraphConnectionType(){
-        PropsUI props = PropsUI.getInstance();
-        this.helper = new MS365DetailsCompositeHelper(PKG, props);
+    private final LogChannelInterface log;
+
+    private GraphConnectionType(LogChannelInterface log){
+        this.log = log;
     }
 
-    public static GraphConnectionType getInstance(){
+    public static GraphConnectionType getInstance(LogChannelInterface log){
         if (graphConnectionType == null){
-            graphConnectionType = new GraphConnectionType();
+            graphConnectionType = new GraphConnectionType(log);
         }
         return graphConnectionType;
     }
@@ -55,17 +55,17 @@ public class GraphConnectionType implements ConnectionTypeInterface {
     }
 
     @Override
-    public GraphConnectionTypeComposite openDialog(Display display, UITypeCallback changeCallback, Composite wTabFolder, int width) {
-        title = this.helper.createTitle(display, wTabFolder, SWT.CENTER | SWT.FILL, "ConnectionDialog.Graph.Title", null);
-        scopeLabel = this.helper.createLabel(wTabFolder, SWT.LEFT | SWT.WRAP, "ConnectionDialog.Graph.Scope", title, 4);
-        scopeText = this.helper.createText(wTabFolder, TEXT_VAR_FLAGS, scopeLabel, 0, 4);
+    public GraphConnectionTypeComposite openDialog(Display display, MS365DetailsCompositeHelper helper, UITypeCallback changeCallback, Composite wTabFolder, int width) {
+        title = helper.createTitle(display, wTabFolder, SWT.CENTER | SWT.FILL, "ConnectionDialog.Graph.Title", null);
+        scopeLabel = helper.createLabel(wTabFolder, SWT.LEFT | SWT.WRAP, "ConnectionDialog.Graph.Scope", title, 4);
+        scopeText = helper.createText(wTabFolder, TEXT_VAR_FLAGS, scopeLabel, 0, 4);
         scopeText.setText(SCOPE_URL);
-        tenantIdLabel = this.helper.createLabel(wTabFolder, SWT.LEFT | SWT.WRAP, "ConnectionDialog.Graph.TenantId", scopeText, 4);
-        tenantIdText = this.helper.createText(wTabFolder, TEXT_VAR_FLAGS, tenantIdLabel, 0, 4);
-        clientIdLabel = this.helper.createLabel(wTabFolder, SWT.LEFT | SWT.WRAP, "ConnectionDialog.Graph.ClientId", tenantIdText, 4);
-        clientIdText = this.helper.createText(wTabFolder, TEXT_VAR_FLAGS, clientIdLabel, 0, 4);
-        clientSecretLabel = this.helper.createLabel(wTabFolder, SWT.LEFT | SWT.WRAP, "ConnectionDialog.Graph.ClientSecret", clientIdText, 4);
-        textVar = this.helper.createText(wTabFolder, TEXT_VAR_FLAGS, clientSecretLabel, 0, 4);
+        tenantIdLabel = helper.createLabel(wTabFolder, SWT.LEFT | SWT.WRAP, "ConnectionDialog.Graph.TenantId", scopeText, 4);
+        tenantIdText = helper.createText(wTabFolder, TEXT_VAR_FLAGS, tenantIdLabel, 0, 4);
+        clientIdLabel = helper.createLabel(wTabFolder, SWT.LEFT | SWT.WRAP, "ConnectionDialog.Graph.ClientId", tenantIdText, 4);
+        clientIdText = helper.createText(wTabFolder, TEXT_VAR_FLAGS, clientIdLabel, 0, 4);
+        clientSecretLabel = helper.createLabel(wTabFolder, SWT.LEFT | SWT.WRAP, "ConnectionDialog.Graph.ClientSecret", clientIdText, 4);
+        textVar = helper.createText(wTabFolder, TEXT_VAR_FLAGS, clientSecretLabel, 0, 4);
         return new GraphConnectionTypeComposite((ChangeCallback) changeCallback);
     }
 
@@ -89,6 +89,11 @@ public class GraphConnectionType implements ConnectionTypeInterface {
         this.textVar.setText(graphConnectionDetails.getPassword());
         this.clientIdText.setText(graphConnectionDetails.getClientId());
         this.tenantIdText.setText(graphConnectionDetails.getTenantId());
+    }
+
+    @Override
+    public LogChannelInterface getLog() {
+        return this.log;
     }
 
     public class GraphConnectionTypeComposite {

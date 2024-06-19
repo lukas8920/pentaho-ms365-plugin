@@ -70,7 +70,7 @@ public class FileRepository {
         }).start();
     }
 
-    private static List<ConnectionDetailsInterface> readAllConnectionDetails(MS365ConnectionManager ms365ConnectionManager, String filename){
+    public static List<ConnectionDetailsInterface> readAllConnectionDetails(MS365ConnectionManager ms365ConnectionManager, String filename){
         List<ConnectionDetailsInterface> connectionDetailsInterfaces = new ArrayList<>();
         try {
             // Create a DocumentBuilderFactory

@@ -6,6 +6,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.MessageBox;
 import org.pentaho.di.base.AbstractMeta;
 import org.pentaho.di.core.EngineMetaInterface;
+import org.pentaho.di.core.logging.LogChannel;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.repository.filerep.KettleFileRepository;
 import org.pentaho.di.ui.spoon.Spoon;
@@ -59,7 +60,7 @@ public class ConnectionDelegate {
             return;
         }
         if (flag == SWT.YES) {
-            MS365ConnectionManager connectionManager = MS365ConnectionManager.getInstance();
+            MS365ConnectionManager connectionManager = MS365ConnectionManager.getInstance(new LogChannel());
             connectionManager.delete(label);
             spoonSupplier.get().getShell().getDisplay().asyncExec(() -> spoonSupplier.get().refreshTree(
                     ConnectionFolderProvider.STRING_MS365_CONNECTIONS));

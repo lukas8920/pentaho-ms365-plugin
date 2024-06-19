@@ -25,8 +25,10 @@ class SharepointConnection implements ISharepointConnection {
     private static final int MAX_REQUEST_COUNTER = 50;
 
     private final GraphServiceClient graphServiceClient;
+    private final IGraphClientDetails iGraphClientDetails;
 
     SharepointConnection(IGraphClientDetails iGraphClientDetails){
+        this.iGraphClientDetails = iGraphClientDetails;
         // Authenticate with Azure AD using the Client Secret Credential
         ClientSecretCredential clientSecretCredential = new ClientSecretCredentialBuilder()
                 .clientId(iGraphClientDetails.getClientId())
@@ -69,7 +71,7 @@ class SharepointConnection implements ISharepointConnection {
             });
             return iSharepointFiles;
         } catch (Exception e){
-            log.warning("Could not retrieve sites from server - returning empty list.");
+            this.iGraphClientDetails.logError("Could not retrieve sites from server - returning empty list.");
             e.printStackTrace();
         }
         return new ArrayList<>();
@@ -85,7 +87,7 @@ class SharepointConnection implements ISharepointConnection {
 
             return getChildren(rootFile, parent, maxNrOfResults);
         } catch (Exception e){
-            log.warning("Could not retrieve root items from server - returning empty list");
+            this.iGraphClientDetails.logError("Could not retrieve root items from server - returning empty list");
             e.printStackTrace();
         }
         return new ArrayList<>();
@@ -96,7 +98,7 @@ class SharepointConnection implements ISharepointConnection {
         try {
             return this.getChildren(parent, parent, maxNrOfResults);
         } catch (Exception e){
-            log.warning("Could not retrieve children from server - returning empty list");
+            this.iGraphClientDetails.logError("Could not retrieve children from server - returning empty list");
             e.printStackTrace();
         }
         return new ArrayList<>();
@@ -107,9 +109,9 @@ class SharepointConnection implements ISharepointConnection {
         ISharepointFile driveFile = determineDriveFile(iSharepointFile);
         String driveId = driveFile.getId();
         String fileId = iSharepointFile.getId();
-        log.info("Get input stream for: ");
-        log.info("Drive id: " + driveId);
-        log.info("File id: " + fileId);
+        this.iGraphClientDetails.logBasic("Get input stream for: ");
+        this.iGraphClientDetails.logBasic("Drive id: " + driveId);
+        this.iGraphClientDetails.logBasic("File id: " + fileId);
         try {
             return this.graphServiceClient.drives().byDriveId(driveId).items().byDriveItemId(fileId).content().get();
         } catch (Exception e){
@@ -122,14 +124,15 @@ class SharepointConnection implements ISharepointConnection {
         String[] parts = path.split("/");
         List<ISharepointFile> resultFiles = new ArrayList<>();
 
+        this.iGraphClientDetails.logDebug("Try to identify path provided by user");
         //sharepoint + site + filename + empty space
         final Counter counter = new Counter(parts.length - 4);
         List<ISharepointFile> iSharepointFiles = getSites(MAX_SITES_TO_FETCH);
         List<ISharepointFile> drives = iSharepointFiles.stream()
                 .filter(iSharepointFile -> iSharepointFile.getName().equals(parts[3])).collect(Collectors.toList());
         if (drives.isEmpty()) throw new InvalidPathException("No matching drive found.", "User Input");
-        log.info("Filtered drives: ");
-        drives.forEach(drive -> log.info("Drive name: " + drive.getName()));
+        this.iGraphClientDetails.logDebug("Filtered drives: ");
+        drives.forEach(drive -> this.iGraphClientDetails.logDebug("Drive name: " + drive.getName()));
 
         List<ISharepointFile> rootItems = new ArrayList<>();
         drives.forEach(drive -> {
@@ -140,8 +143,8 @@ class SharepointConnection implements ISharepointConnection {
         });
         if (rootItems.isEmpty()) throw new InvalidPathException("No matching root item found.", "User Input");
         if (!resultFiles.isEmpty()) return resultFiles.get(0);
-        log.info("Filtered root items: ");
-        rootItems.forEach(item -> log.info("Root item: " + item.getName()));
+        this.iGraphClientDetails.logDebug("Filtered root items: ");
+        rootItems.forEach(item -> this.iGraphClientDetails.logDebug("Root item: " + item.getName()));
 
         Counter part = new Counter(5);
         rootItems.forEach(rootItem -> {
@@ -157,8 +160,8 @@ class SharepointConnection implements ISharepointConnection {
 
     private void validateChildItems(ISharepointFile parent, List<ISharepointFile> resultFiles, String[] parts){
         List<ISharepointFile> items = getChildren(parent, parent.getChildrenCount());
-        items.forEach(item -> log.info("Sub Directory: " + item.getName()));
-        log.info("Compare against: " + parts[((ICountableSharepointFile) parent).getPartCounter().getCount()]);
+        items.forEach(item -> this.iGraphClientDetails.logDebug("Sub Directory: " + item.getName()));
+        this.iGraphClientDetails.logDebug("Compare against: " + parts[((ICountableSharepointFile) parent).getPartCounter().getCount()]);
 
         ((ICountableSharepointFile) parent).getFileCounter().decrement(1);
 

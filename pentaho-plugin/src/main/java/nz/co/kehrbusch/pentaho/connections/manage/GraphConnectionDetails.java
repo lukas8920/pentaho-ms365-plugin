@@ -5,6 +5,7 @@ import nz.co.kehrbusch.ms365.interfaces.IGraphClientDetails;
 import nz.co.kehrbusch.ms365.interfaces.IGraphConnection;
 import nz.co.kehrbusch.ms365.interfaces.ISharepointConnection;
 import org.pentaho.di.core.encryption.KettleTwoWayPasswordEncoder;
+import org.pentaho.di.core.logging.LogChannelInterface;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.support.encryption.PasswordEncoderException;
 import org.w3c.dom.Document;
@@ -15,7 +16,6 @@ import java.util.logging.Logger;
 import static nz.co.kehrbusch.pentaho.connections.util.StringHelper.isEmpty;
 
 public class GraphConnectionDetails implements ConnectionDetailsInterface, IGraphClientDetails {
-    private static final Logger log = Logger.getLogger(GraphConnectionDetails.class.getName());
     private static final Class<?> PKG = GraphConnectionDetails.class;
 
     private final GraphConnectionType graphConnectionType;
@@ -40,7 +40,7 @@ public class GraphConnectionDetails implements ConnectionDetailsInterface, IGrap
         try {
             this.encoder.init();
         } catch (PasswordEncoderException e) {
-            log.info(e.getMessage());
+            logError(e.getMessage());
         }
     }
 
@@ -251,5 +251,20 @@ public class GraphConnectionDetails implements ConnectionDetailsInterface, IGrap
     @Override
     public void onInitiatedByUser() {
         this.setiSharepointConnection();
+    }
+
+    @Override
+    public void logBasic(String message) {
+        this.graphConnectionType.getLog().logBasic(message);
+    }
+
+    @Override
+    public void logError(String message) {
+        this.graphConnectionType.getLog().logError(message);
+    }
+
+    @Override
+    public void logDebug(String message) {
+        this.graphConnectionType.getLog().logDebug(message);
     }
 }

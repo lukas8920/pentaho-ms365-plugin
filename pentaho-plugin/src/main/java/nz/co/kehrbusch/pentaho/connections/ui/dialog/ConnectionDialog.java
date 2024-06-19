@@ -11,6 +11,7 @@ import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.*;
 import org.pentaho.di.core.Const;
+import org.pentaho.di.core.logging.LogChannel;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.ui.core.PropsUI;
 import org.pentaho.di.ui.core.gui.GUIResource;
@@ -33,7 +34,7 @@ public class ConnectionDialog extends Dialog {
 
     private static final int TEXT_VAR_FLAGS = SWT.SINGLE | SWT.LEFT | SWT.BORDER;
 
-    private final MS365ConnectionManager connectionManager = MS365ConnectionManager.getInstance();
+    private final MS365ConnectionManager connectionManager = MS365ConnectionManager.getInstance(new LogChannel());
 
     private final int width;
     private final int height;
@@ -222,7 +223,7 @@ public class ConnectionDialog extends Dialog {
         if ( this.selectedDetails != null ) {
             log.info("Create components of Graph dialog");
             UITypeCallback uiTypeCallback = this.selectedDetails.provideCallback();
-            this.graphConnectionTypeComposite = this.selectedDetails.provideType().openDialog(shell.getDisplay(), uiTypeCallback, wDetailsWrapperComp, width);
+            this.graphConnectionTypeComposite = this.selectedDetails.provideType().openDialog(shell.getDisplay(), this.helper, uiTypeCallback, wDetailsWrapperComp, width);
         }
 
         wScrolledComposite.setExpandHorizontal( true );

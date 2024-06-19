@@ -3,6 +3,7 @@ package nz.co.kehrbusch.pentaho.connections.ui.tree;
 import nz.co.kehrbusch.pentaho.connections.manage.ConnectionDetailsInterface;
 import nz.co.kehrbusch.pentaho.connections.manage.MS365ConnectionManager;
 import org.pentaho.di.base.AbstractMeta;
+import org.pentaho.di.core.logging.LogChannel;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.repository.Repository;
 import org.pentaho.di.ui.core.gui.GUIResource;
@@ -20,7 +21,7 @@ public class ConnectionFolderProvider extends TreeFolderProvider {
     private final MS365ConnectionManager connectionManager;
 
     public ConnectionFolderProvider() {
-        this.connectionManager = MS365ConnectionManager.getInstance();
+        this.connectionManager = MS365ConnectionManager.getInstance(new LogChannel());
     }
 
     @Override

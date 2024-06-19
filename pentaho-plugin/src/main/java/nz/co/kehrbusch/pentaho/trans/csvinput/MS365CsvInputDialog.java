@@ -61,7 +61,7 @@ public class MS365CsvInputDialog extends CsvInputDialog {
 
     public MS365CsvInputDialog(Shell parent, Object in, TransMeta tr, String sname) {
         super(parent, in, tr, sname);
-        this.connectionManager = MS365ConnectionManager.getInstance();
+        this.connectionManager = MS365ConnectionManager.getInstance(new LogChannel());
         this.ms365CsvInputMeta = (MS365CsvInputMeta) in;
         this.baseStepMeta = (MS365CsvInputMeta) in;
     }

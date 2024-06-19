@@ -62,6 +62,7 @@ public abstract class MS365BaseCsvInput extends CsvInput {
         if (this.first) {
             this.first = false;
 
+            log.logBasic("Loading data from sharepoint...");
             this.initConnection(this.meta);
 
             this.data.outputRowMeta = new RowMeta();

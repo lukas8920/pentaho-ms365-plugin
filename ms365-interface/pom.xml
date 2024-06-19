@@ -82,7 +82,7 @@
                         </goals>
                         <configuration>
                             <appendAssemblyId>false</appendAssemblyId>
-                            <outputDirectory>/home/lukas/Downloads/pdi-ce-9.4.0.0-343/data-integration/plugins/ms365-plugin-0.0.2/lib</outputDirectory>
+                            <outputDirectory>/home/lukas/Downloads/pdi-ce-9.4.0.0-343/data-integration/plugins/ms365-plugin-0.0.3/lib</outputDirectory>
                             <finalName>ms365-interface-${project.version}</finalName>
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>

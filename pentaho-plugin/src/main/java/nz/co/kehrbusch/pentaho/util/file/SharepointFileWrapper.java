@@ -8,28 +8,30 @@ import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.BaseEntity;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365Directory;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365Site;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365File;
+import org.pentaho.di.core.logging.LogChannel;
+import org.pentaho.di.core.logging.LogChannelInterface;
 
 import java.nio.file.InvalidPathException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 public class SharepointFileWrapper {
-    private static final Logger log = Logger.getLogger(SharepointFileWrapper.class.getName());
     private final List<IStreamProvider> streamProviders;
     private final ISharepointConnection iSharepointConnection;
+    private final LogChannelInterface channel;
 
-    public SharepointFileWrapper(MS365CsvInputMeta ms365CsvInputMeta, ISharepointConnection iSharepointConnection){
+    public SharepointFileWrapper(MS365CsvInputMeta ms365CsvInputMeta, ISharepointConnection iSharepointConnection, LogChannelInterface channel){
         this.streamProviders = new ArrayList<>();
         this.iSharepointConnection = iSharepointConnection;
+        this.channel = channel;
 
         if (iSharepointConnection != null){
             IStreamProvider iStreamProvider = map(iSharepointConnection.inflateTreeByPath(ms365CsvInputMeta.getFilename()));
             this.streamProviders.add(iStreamProvider);
-            log.info("Retrieved File");
-            log.info(iStreamProvider.getName());
-            log.info(iStreamProvider.getId());
-            log.info(iStreamProvider.getPath());
+            channel.logDebug("Retrieved base file from sharepoint");
+            channel.logDebug("Base file name: " + iStreamProvider.getName());
+            channel.logDebug("Base file path: " + iStreamProvider.getPath());
+            channel.logDebug("Base file id: " + iStreamProvider.getId());
         }
     }
 
@@ -41,9 +43,9 @@ public class SharepointFileWrapper {
         if (this.iSharepointConnection == null) throw new NullPointerException("No MS365 connection provided.");
         IStreamProvider iStreamProvider = this.streamProviders.stream()
                 .filter(streamProvider -> {
-                    log.info("Compare: ");
-                    log.info(streamProvider.getPath() + streamProvider.getName());
-                    log.info(filename);
+                    channel.logDebug("Compare files: ");
+                    channel.logDebug("Path of base file from sharepoint: " +streamProvider.getPath() + streamProvider.getName());
+                    channel.logDebug("Path of requested base file: " + filename);
                     return (streamProvider.getPath() + streamProvider.getName()).equals(filename);
                 })
                 .findFirst().orElse(null);
