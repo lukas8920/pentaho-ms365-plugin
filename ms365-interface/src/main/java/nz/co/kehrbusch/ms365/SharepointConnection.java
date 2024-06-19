@@ -5,6 +5,7 @@ import com.azure.identity.ClientSecretCredentialBuilder;
 import com.microsoft.graph.models.*;
 import com.microsoft.graph.serviceclient.GraphServiceClient;
 import nz.co.kehrbusch.ms365.interfaces.IGraphClientDetails;
+import nz.co.kehrbusch.ms365.interfaces.ISharepointApi;
 import nz.co.kehrbusch.ms365.interfaces.ISharepointConnection;
 import nz.co.kehrbusch.ms365.interfaces.entities.Counter;
 import nz.co.kehrbusch.ms365.interfaces.entities.ICountableSharepointFile;
@@ -24,8 +25,8 @@ class SharepointConnection implements ISharepointConnection {
     private static final Logger log = Logger.getLogger(SharepointConnection.class.getName());
     private static final int MAX_REQUEST_COUNTER = 50;
 
-    private final GraphServiceClient graphServiceClient;
     private final IGraphClientDetails iGraphClientDetails;
+    private final ISharepointApi iSharepointApi;
 
     SharepointConnection(IGraphClientDetails iGraphClientDetails){
         this.iGraphClientDetails = iGraphClientDetails;
@@ -37,7 +38,8 @@ class SharepointConnection implements ISharepointConnection {
                 .build();
 
         // Create a GraphServiceClient with the AuthProvider
-        this.graphServiceClient = new GraphServiceClient(clientSecretCredential, iGraphClientDetails.getScope());
+        GraphServiceClient graphServiceClient = new GraphServiceClient(clientSecretCredential, iGraphClientDetails.getScope());
+        this.iSharepointApi = new SharepointApi(graphServiceClient);
     }
 
     @Override
@@ -45,9 +47,7 @@ class SharepointConnection implements ISharepointConnection {
         try {
             List<ISharepointFile> iSharepointFiles = new ArrayList<>();
             int top = Math.max(maxNrOfResults, 100);
-            SiteCollectionResponse siteCollectionResponse = this.graphServiceClient.sites().get(config -> {
-                config.queryParameters.top = top;
-            });
+            SiteCollectionResponse siteCollectionResponse = this.iSharepointApi.getAllSites(top);
             List<Site> sites = siteCollectionResponse.getValue();
             if (sites.size() == 0) return iSharepointFiles;
 
@@ -55,11 +55,7 @@ class SharepointConnection implements ISharepointConnection {
                 SharepointObject siteFile = new SharepointObject(site.getId(), site.getName(), null);
                 iSharepointFiles.add(siteFile);
 
-                DriveCollectionResponse driveCollectionResponse = this.graphServiceClient
-                        .sites().bySiteId(site.getId())
-                        .drives().get(config -> {
-                            config.queryParameters.top = top;
-                        });
+                DriveCollectionResponse driveCollectionResponse = this.iSharepointApi.getDrivesBySiteId(site.getId(), top);
                 List<Drive> drives = driveCollectionResponse.getValue();
                 if (drives.size() == 0) return;
 
@@ -80,9 +76,7 @@ class SharepointConnection implements ISharepointConnection {
     @Override
     public List<ISharepointFile> getRootItems(ISharepointFile parent, int maxNrOfResults){
         try {
-            DriveItem rootItem = this.graphServiceClient.drives()
-                    .byDriveId(parent.getId())
-                    .root().get();
+            DriveItem rootItem = this.iSharepointApi.getRootItemByDrivId(parent.getId());
             SharepointObject rootFile = new SharepointObject(rootItem.getId(), rootItem.getName(), parent);
 
             return getChildren(rootFile, parent, maxNrOfResults);
@@ -113,7 +107,7 @@ class SharepointConnection implements ISharepointConnection {
         this.iGraphClientDetails.logBasic("Drive id: " + driveId);
         this.iGraphClientDetails.logBasic("File id: " + fileId);
         try {
-            return this.graphServiceClient.drives().byDriveId(driveId).items().byDriveItemId(fileId).content().get();
+            return this.iSharepointApi.getInputStreamByDriveIdAndItemId(driveId, fileId);
         } catch (Exception e){
             throw new IOException("Could not get Input Stream from server.");
         }
@@ -199,9 +193,8 @@ class SharepointConnection implements ISharepointConnection {
         int top = Math.max(maxNrOfResults, 100);
         ISharepointFile driveFile = determineDriveFile(physicalParent);
 
-        DriveItemCollectionResponse items = this.graphServiceClient.drives().byDriveId(driveFile.getId())
-                .items().byDriveItemId(physicalParent.getId()).children().get(config ->
-                        config.queryParameters.top = top);
+        DriveItemCollectionResponse items = this.iSharepointApi.getItemsByDriveIdAndItemId(driveFile.getId(), physicalParent.getId(), top);
+
         List<DriveItem> driveItems = items.getValue();
         if (driveItems.size() != 0) {
             driveItems.forEach(driveItem -> {
