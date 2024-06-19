@@ -4,7 +4,6 @@ import nz.co.kehrbusch.ms365.interfaces.entities.IStreamProvider;
 import nz.co.kehrbusch.pentaho.connections.manage.ConnectionDetailsInterface;
 import nz.co.kehrbusch.pentaho.connections.manage.GraphConnectionDetails;
 import nz.co.kehrbusch.pentaho.connections.manage.MS365ConnectionManager;
-import nz.co.kehrbusch.pentaho.util.file.SharepointFileWrapper;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.MS365OpenSaveDialog;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365FileProvider;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365File;
@@ -21,10 +20,16 @@ import org.pentaho.di.core.logging.LogChannel;
 import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.plugins.fileopensave.service.ProviderServiceService;
+import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
+import org.pentaho.di.trans.TransPreviewFactory;
 import org.pentaho.di.trans.steps.common.CsvInputAwareMeta;
 import org.pentaho.di.ui.core.FileDialogOperation;
+import org.pentaho.di.ui.core.dialog.EnterNumberDialog;
+import org.pentaho.di.ui.core.dialog.EnterTextDialog;
+import org.pentaho.di.ui.core.dialog.PreviewRowsDialog;
 import org.pentaho.di.ui.core.widget.TextVar;
+import org.pentaho.di.ui.trans.dialog.TransPreviewProgressDialog;
 import org.pentaho.di.ui.trans.steps.csvinput.CsvInputDialog;
 
 import java.io.BufferedInputStream;
@@ -78,11 +83,21 @@ public class MS365CsvInputDialog extends CsvInputDialog {
             cCombo = (CCombo) Arrays.stream(controls).filter(control -> control instanceof CCombo).collect(Collectors.toList()).get(0);
         } else {
             wFilename = (TextVar) Arrays.stream(controls).filter(control -> control instanceof TextVar).collect(Collectors.toList()).get(0);
+            wFilename.addModifyListener(this.modifyListener);
         }
 
         this.wGet.setVisible(false);
         this.wGet.removeListener(13, super.lsGet);
         this.wGet.addListener(13, lsGet);
+
+        this.wPreview.removeListener(13, this.lsPreview);
+        this.lsPreview = new Listener() {
+            @Override
+            public void handleEvent(Event event) {
+                MS365CsvInputDialog.this.preview();
+            }
+        };
+        this.wPreview.addListener(13, this.lsPreview);
 
         Button wbbFilename = (Button) Arrays.stream(controls).filter(control -> control instanceof Button && ((Button) control).getText().equals(BaseMessages.getString(PKG, "System.Button.Browse", new String[0])))
                 .findFirst().orElse(null);
@@ -114,18 +129,21 @@ public class MS365CsvInputDialog extends CsvInputDialog {
         fdlConnection.right = new FormAttachment(100, 0);
         wConnectionField.setLayoutData(fdlConnection);
 
-        wbbFilename.dispose();
-        wbbFilename = new Button(this.shell, 16777224);
-        this.props.setLook(wbbFilename);
-        wbbFilename.setText(BaseMessages.getString(PKG, "System.Button.Browse", new String[0]));
-        wbbFilename.setToolTipText(BaseMessages.getString(PKG, "System.Tooltip.BrowseForFileOrDirAndAdd", new String[0]));
-        FormData fdbFilename = new FormData();
-        fdbFilename.top = new FormAttachment(wConnectionField, margin);
-        fdbFilename.right = new FormAttachment(100, 0);
-        wbbFilename.setLayoutData(fdbFilename);
-        wbbFilename.addSelectionListener(selectFileListener);
+        if(wbbFilename != null){
+            wbbFilename.dispose();
+            wbbFilename = new Button(this.shell, 16777224);
+            this.props.setLook(wbbFilename);
+            wbbFilename.setText(BaseMessages.getString(PKG, "System.Button.Browse", new String[0]));
+            wbbFilename.setToolTipText(BaseMessages.getString(PKG, "System.Tooltip.BrowseForFileOrDirAndAdd", new String[0]));
+            FormData fdbFilename = new FormData();
+            fdbFilename.top = new FormAttachment(wConnectionField, margin);
+            fdbFilename.right = new FormAttachment(100, 0);
+            wbbFilename.setLayoutData(fdbFilename);
+            wbbFilename.addSelectionListener(selectFileListener);
+        }
 
-        fdbFilename = new FormData();
+
+        FormData fdbFilename = new FormData();
         fdbFilename.top = new FormAttachment(wConnectionField, margin);
         fdbFilename.left = new FormAttachment(0, 0);
         fdbFilename.right = new FormAttachment(middle, -margin);
@@ -148,8 +166,6 @@ public class MS365CsvInputDialog extends CsvInputDialog {
         };
         this.wOK.removeListener(13, listeners[0]);
         this.wOK.addListener(13, overwriteListener);
-
-        this.wFilename.addModifyListener(this.modifyListener);
 
         wlAddResult.dispose();
         //keep, but hide, Button to avoid NullPointerExceptions
@@ -192,6 +208,31 @@ public class MS365CsvInputDialog extends CsvInputDialog {
         if (!this.isInitialized){
             addControls();
             this.isInitialized = true;
+        }
+    }
+
+    private synchronized void preview(){
+        MS365CsvInputMeta oneMeta = new MS365CsvInputMeta();
+        super.populateMeta(oneMeta);
+        oneMeta.setConnectionName(this.wConnectionField.getText());
+        TransMeta previewMeta = TransPreviewFactory.generatePreviewTransformation(this.transMeta, oneMeta, this.wStepname.getText());
+        this.transMeta.getVariable("Internal.Transformation.Filename.Directory");
+        previewMeta.getVariable("Internal.Transformation.Filename.Directory");
+        EnterNumberDialog numberDialog = new EnterNumberDialog(this.shell, this.props.getDefaultPreviewSize(), BaseMessages.getString(PKG, "CsvInputDialog.PreviewSize.DialogTitle", new String[0]), BaseMessages.getString(PKG, "CsvInputDialog.PreviewSize.DialogMessage", new String[0]));
+        int previewSize = numberDialog.open();
+        if (previewSize > 0) {
+            TransPreviewProgressDialog progressDialog = new TransPreviewProgressDialog(this.shell, previewMeta, new String[]{this.wStepname.getText()}, new int[]{previewSize});
+            progressDialog.open();
+            Trans trans = progressDialog.getTrans();
+            String loggingText = progressDialog.getLoggingText();
+            if (!progressDialog.isCancelled() && trans.getResult() != null && trans.getResult().getNrErrors() > 0L) {
+                EnterTextDialog etd = new EnterTextDialog(this.shell, BaseMessages.getString(PKG, "System.Dialog.PreviewError.Title", new String[0]), BaseMessages.getString(PKG, "System.Dialog.PreviewError.Message", new String[0]), loggingText, true);
+                etd.setReadOnly();
+                etd.open();
+            }
+
+            PreviewRowsDialog prd = new PreviewRowsDialog(this.shell, this.transMeta, 0, this.wStepname.getText(), progressDialog.getPreviewRowsMeta(this.wStepname.getText()), progressDialog.getPreviewRows(this.wStepname.getText()), loggingText);
+            prd.open();
         }
     }
 

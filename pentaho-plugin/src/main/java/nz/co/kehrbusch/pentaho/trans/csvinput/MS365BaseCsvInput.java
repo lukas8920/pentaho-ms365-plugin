@@ -16,6 +16,7 @@ import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
+import org.pentaho.di.trans.TransPreviewFactory;
 import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
@@ -24,6 +25,10 @@ import org.pentaho.di.trans.steps.fileinput.text.BOMDetector;
 import org.pentaho.di.trans.steps.textfileinput.EncodingType;
 import org.pentaho.di.trans.steps.textfileinput.TextFileInput;
 import org.pentaho.di.trans.steps.textfileinput.TextFileInputField;
+import org.pentaho.di.ui.core.dialog.EnterNumberDialog;
+import org.pentaho.di.ui.core.dialog.EnterTextDialog;
+import org.pentaho.di.ui.core.dialog.PreviewRowsDialog;
+import org.pentaho.di.ui.trans.dialog.TransPreviewProgressDialog;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -754,6 +759,6 @@ public abstract class MS365BaseCsvInput extends CsvInput {
     }
 
     String filenameValidatorForInputFiles(String filename) {
-        return filename.endsWith(".csv") ? filename : "";
+        return filename.startsWith("/sharepoint") && filename.endsWith(".csv") ? filename : "";
     }
 }
