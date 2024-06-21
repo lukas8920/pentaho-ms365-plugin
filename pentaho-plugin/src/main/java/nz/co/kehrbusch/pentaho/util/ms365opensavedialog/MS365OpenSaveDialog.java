@@ -373,13 +373,6 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
         lblComboFilter.setText( BaseMessages.getString( PKG, "file-open-save-plugin.app.save.file-filter.label" ) );
         PropsUI.getInstance().setLook( lblComboFilter );
 
-        /*lblLoadingInfo = new Label(parent, SWT.NONE);
-        lblLoadingInfo.setText(BaseMessages.getString(PKG, "file-open-save-plugin.app.save.loading"));
-        PropsUI.getInstance().setLook(lblLoadingInfo);
-
-        lblLoadingInfo.setLayoutData(
-                new FormDataBuilder().top(select, 28).left(flatBtnHelp.label, 60).result());*/
-
         btnCancel = new Button( parent, SWT.NONE );
         PropsUI.getInstance().setLook( btnCancel );
         btnCancel.addSelectionListener( new SelectionAdapter() {

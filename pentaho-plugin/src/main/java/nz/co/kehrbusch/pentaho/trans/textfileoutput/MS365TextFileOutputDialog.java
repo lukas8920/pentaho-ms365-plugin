@@ -145,6 +145,10 @@ public class MS365TextFileOutputDialog extends TextFileOutputDialog {
         this.wOK.removeListener(13, listeners[0]);
         this.wOK.addListener(13, overwriteListener);
 
+        if(this.wFieldNameInField.getSelection()){
+            this.wbFilename.setEnabled(false);
+        }
+
         this.populateDialog();
     }
 
