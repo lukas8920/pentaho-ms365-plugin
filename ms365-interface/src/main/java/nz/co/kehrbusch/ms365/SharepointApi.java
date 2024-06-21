@@ -1,9 +1,7 @@
 package nz.co.kehrbusch.ms365;
 
-import com.microsoft.graph.models.DriveCollectionResponse;
-import com.microsoft.graph.models.DriveItem;
-import com.microsoft.graph.models.DriveItemCollectionResponse;
-import com.microsoft.graph.models.SiteCollectionResponse;
+import com.microsoft.graph.drives.item.items.item.createuploadsession.CreateUploadSessionPostRequestBody;
+import com.microsoft.graph.models.*;
 import com.microsoft.graph.serviceclient.GraphServiceClient;
 import nz.co.kehrbusch.ms365.interfaces.ISharepointApi;
 
@@ -49,5 +47,15 @@ public class SharepointApi implements ISharepointApi {
         return this.graphServiceClient.drives().byDriveId(driveId)
                 .items().byDriveItemId(itemId).children().get(config ->
                         config.queryParameters.top = maxNrOfResults);
+    }
+
+    @Override
+    public void updateDriveItemByDriveIdAndItemId(String driveId, String itemId, InputStream inputStream) {
+        this.graphServiceClient.drives().byDriveId(driveId).items().byDriveItemId(itemId).content().put(inputStream);
+    }
+
+    @Override
+    public DriveItem createNewItemByDriveIdandParentIdandName(String driveId, String parentId, DriveItem driveItem) {
+        return this.graphServiceClient.drives().byDriveId(driveId).items().byDriveItemId(parentId).children().post(driveItem);
     }
 }

@@ -1,5 +1,6 @@
 package nz.co.kehrbusch.ms365;
 
+import com.microsoft.graph.models.DriveItem;
 import nz.co.kehrbusch.ms365.interfaces.entities.Counter;
 import nz.co.kehrbusch.ms365.interfaces.entities.ICountableSharepointFile;
 import nz.co.kehrbusch.ms365.interfaces.entities.ISharepointFile;
@@ -19,6 +20,13 @@ public class SharepointObject implements ICountableSharepointFile {
     private final List<ISharepointFile> children;
 
     public SharepointObject(){
+        this.children = new ArrayList<>();
+    }
+
+    public SharepointObject(DriveItem driveItem, ISharepointFile parent){
+        this.name = driveItem.getName();
+        this.id = driveItem.getId();
+        this.parent = parent;
         this.children = new ArrayList<>();
     }
 

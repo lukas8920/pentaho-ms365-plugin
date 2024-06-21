@@ -3,6 +3,8 @@ package nz.co.kehrbusch.pentaho.util.ms365opensavedialog;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import nz.co.kehrbusch.pentaho.util.config.MS365FileController;
 import nz.co.kehrbusch.pentaho.util.config.ProviderFilterType;
+import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.BaseEntity;
+import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365Directory;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365File;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jface.dialogs.Dialog;
@@ -107,7 +109,8 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
     private static final String PASTE_ACTION_REPLACE = "replace";
     private static final String PASTE_ACTION_KEEP_BOTH = "keep-both";
     private FilterFileType[] validFileTypes;
-    private MS365File selectedFile;
+    private BaseEntity selectedFile;
+    private BaseEntity createdFilename;
     private String shellTitle = "Open";
     private String objectId;
     private String name;
@@ -370,17 +373,19 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
         lblComboFilter.setText( BaseMessages.getString( PKG, "file-open-save-plugin.app.save.file-filter.label" ) );
         PropsUI.getInstance().setLook( lblComboFilter );
 
-        lblLoadingInfo = new Label(parent, SWT.NONE);
+        /*lblLoadingInfo = new Label(parent, SWT.NONE);
         lblLoadingInfo.setText(BaseMessages.getString(PKG, "file-open-save-plugin.app.save.loading"));
         PropsUI.getInstance().setLook(lblLoadingInfo);
 
         lblLoadingInfo.setLayoutData(
-                new FormDataBuilder().top(select, 28).left(flatBtnHelp.label, 60).result());
+                new FormDataBuilder().top(select, 28).left(flatBtnHelp.label, 60).result());*/
 
         btnCancel = new Button( parent, SWT.NONE );
         PropsUI.getInstance().setLook( btnCancel );
         btnCancel.addSelectionListener( new SelectionAdapter() {
             @Override public void widgetSelected( SelectionEvent selectionEvent ) {
+                MS365OpenSaveDialog.this.createdFilename = null;
+                MS365OpenSaveDialog.this.selectedFile = null;
                 clearState();
                 parent.dispose();
             }
@@ -686,6 +691,12 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
         RowData rd = new RowData();
         rd.width = 200;
 
+        lblLoadingInfo = new Label(headerComposite, SWT.NONE);
+        lblLoadingInfo.setText(BaseMessages.getString(PKG, "file-open-save-plugin.app.save.loading"));
+        PropsUI.getInstance().setLook(lblLoadingInfo);
+
+        lblLoadingInfo.setLayoutData(new FormDataBuilder().bottom(100, 0).right(100, -15).result());
+
         headerComposite.layout();
 
         return headerComposite;
@@ -801,6 +812,7 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
                 }
             }
         } );
+
         return buttons;
     }
 
@@ -1345,7 +1357,18 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
         connection = ( f instanceof VFSFile ) ? ( (VFSFile) f ).getConnection() : null;
         objectId = ( f instanceof RepositoryFile ) ? ( (RepositoryFile) f ).getObjectId() : null;
 
-        selectedFile = (f instanceof MS365File) ? (MS365File) f : null;
+        if (f instanceof BaseEntity && this.createdFilename != null && this.selectedFile != null && !((BaseEntity) f).getName().equals(selectedFile.getName())){
+            this.createdFilename.setParent((BaseEntity) f);
+        }
+
+        selectedFile = (f instanceof BaseEntity) ? (BaseEntity) f : null;
+
+        if (txtFileName != null && !txtFileName.getText().isEmpty() && ( this.createdFilename == null ||
+                !createdFilename.getName().equals(txtFileName.getText()))){
+            this.createdFilename = new MS365File();
+            this.createdFilename.setName(txtFileName.getText());
+            this.createdFilename.setParent(selectedFile);
+        }
 
         if ( isSaveState() ) {
             path = ( f instanceof Directory ) ? f.getPath() : f.getParent();
@@ -1574,8 +1597,15 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
         return log;
     }
 
-    public MS365File getSelectedFile() {
-        return selectedFile;
+    public BaseEntity getSelectedFile() {
+        if (selectedFile instanceof Directory && createdFilename != null && createdFilename.getParentObject() != null){
+            return this.createdFilename;
+        } else if (selectedFile instanceof MS365File){
+            return selectedFile;
+        } else if (selectedFile instanceof Directory && createdFilename == null){
+            this.selectedFile = null;
+        }
+        return null;
     }
 
     protected static class FlatButton {

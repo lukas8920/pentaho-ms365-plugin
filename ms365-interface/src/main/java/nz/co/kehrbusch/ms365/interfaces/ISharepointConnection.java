@@ -14,4 +14,6 @@ public interface ISharepointConnection {
     List<ISharepointFile> getRootItems(ISharepointFile parent, int maxNrOfResults);
     InputStream getInputStream(ISharepointFile iSharepointFile) throws IOException;
     ISharepointFile inflateTreeByPath(String path) throws InvalidPathException;
+    ISharepointFile inflateTreeByPath(String path, boolean createIfNotExists) throws InvalidPathException;
+    void writeToSharepoint(ISharepointFile iSharepointFile, byte[] data, boolean appendData);
 }

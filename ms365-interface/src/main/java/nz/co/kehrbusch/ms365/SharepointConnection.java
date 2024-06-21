@@ -1,45 +1,27 @@
 package nz.co.kehrbusch.ms365;
 
-import com.azure.identity.ClientSecretCredential;
-import com.azure.identity.ClientSecretCredentialBuilder;
 import com.microsoft.graph.models.*;
-import com.microsoft.graph.serviceclient.GraphServiceClient;
 import nz.co.kehrbusch.ms365.interfaces.IGraphClientDetails;
-import nz.co.kehrbusch.ms365.interfaces.ISharepointApi;
 import nz.co.kehrbusch.ms365.interfaces.ISharepointConnection;
 import nz.co.kehrbusch.ms365.interfaces.entities.Counter;
 import nz.co.kehrbusch.ms365.interfaces.entities.ICountableSharepointFile;
 import nz.co.kehrbusch.ms365.interfaces.entities.ISharepointFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.InvalidPathException;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-class SharepointConnection implements ISharepointConnection {
-    private static final int MAX_SITES_TO_FETCH = 100;
-
+class SharepointConnection extends SharepointBaseProcessor implements ISharepointConnection {
     private static final Logger log = Logger.getLogger(SharepointConnection.class.getName());
     private static final int MAX_REQUEST_COUNTER = 50;
 
-    private final IGraphClientDetails iGraphClientDetails;
-    private final ISharepointApi iSharepointApi;
-
     SharepointConnection(IGraphClientDetails iGraphClientDetails){
-        this.iGraphClientDetails = iGraphClientDetails;
-        // Authenticate with Azure AD using the Client Secret Credential
-        ClientSecretCredential clientSecretCredential = new ClientSecretCredentialBuilder()
-                .clientId(iGraphClientDetails.getClientId())
-                .clientSecret(iGraphClientDetails.getPassword())
-                .tenantId(iGraphClientDetails.getTenantId())
-                .build();
-
-        // Create a GraphServiceClient with the AuthProvider
-        GraphServiceClient graphServiceClient = new GraphServiceClient(clientSecretCredential, iGraphClientDetails.getScope());
-        this.iSharepointApi = new SharepointApi(graphServiceClient);
+        super(iGraphClientDetails);
     }
 
     @Override
@@ -115,6 +97,12 @@ class SharepointConnection implements ISharepointConnection {
 
     @Override
     public ISharepointFile inflateTreeByPath(String path) throws InvalidPathException {
+        return this.inflateTreeByPath(path, false);
+    }
+
+    @Override
+    public ISharepointFile inflateTreeByPath(String path, boolean createIfNotExists) throws InvalidPathException {
+        log.info("Inflate tree for: " + path);
         String[] parts = path.split("/");
         List<ISharepointFile> resultFiles = new ArrayList<>();
 
@@ -123,7 +111,7 @@ class SharepointConnection implements ISharepointConnection {
         final Counter counter = new Counter(parts.length - 4);
         List<ISharepointFile> iSharepointFiles = getSites(MAX_SITES_TO_FETCH);
         List<ISharepointFile> drives = iSharepointFiles.stream()
-                .filter(iSharepointFile -> iSharepointFile.getName().equals(parts[3])).collect(Collectors.toList());
+                .filter(iSharepointFile -> iSharepointFile.getName().equals(parts[3]) && iSharepointFile.getParentObject().getName().equals(parts[2])).collect(Collectors.toList());
         if (drives.isEmpty()) throw new InvalidPathException("No matching drive found.", "User Input");
         this.iGraphClientDetails.logDebug("Filtered drives: ");
         drives.forEach(drive -> this.iGraphClientDetails.logDebug("Drive name: " + drive.getName()));
@@ -135,7 +123,8 @@ class SharepointConnection implements ISharepointConnection {
             rootItems.addAll(items);
             if (((ICountableSharepointFile) drive).getFileCounter().getCount() <= 0) resultFiles.addAll(items);
         });
-        if (rootItems.isEmpty()) throw new InvalidPathException("No matching root item found.", "User Input");
+        if (rootItems.isEmpty() && !createIfNotExists) throw new InvalidPathException("No matching root item found.", "User Input");
+        if (rootItems.isEmpty()) return this.createRootPath(drives.get(0), parts);
         if (!resultFiles.isEmpty()) return resultFiles.get(0);
         this.iGraphClientDetails.logDebug("Filtered root items: ");
         rootItems.forEach(item -> this.iGraphClientDetails.logDebug("Root item: " + item.getName()));
@@ -152,67 +141,27 @@ class SharepointConnection implements ISharepointConnection {
         return resultFiles.get(0);
     }
 
-    private void validateChildItems(ISharepointFile parent, List<ISharepointFile> resultFiles, String[] parts){
-        List<ISharepointFile> items = getChildren(parent, parent.getChildrenCount());
-        items.forEach(item -> this.iGraphClientDetails.logDebug("Sub Directory: " + item.getName()));
-        this.iGraphClientDetails.logDebug("Compare against: " + parts[((ICountableSharepointFile) parent).getPartCounter().getCount()]);
 
-        ((ICountableSharepointFile) parent).getFileCounter().decrement(1);
 
-        List<ISharepointFile> childItems = items.stream()
-                .filter(iSharepointFile -> iSharepointFile.getName().equals(parts[((ICountableSharepointFile) parent).getPartCounter().getCount()])).collect(Collectors.toList());
-
-        ((ICountableSharepointFile) parent).getPartCounter().increment(1);
-
-        childItems.forEach(childItem -> {
-            ((ICountableSharepointFile) childItem).setFileCounter(((ICountableSharepointFile) parent).getFileCounter().copy());
-            ((ICountableSharepointFile) childItem).setPartCounter(((ICountableSharepointFile) parent).getPartCounter().copy());
-        });
-
-        if (checkCounter(childItems) && !childItems.isEmpty()){
-            resultFiles.addAll(childItems);
-        } else if (!childItems.isEmpty()){
-            childItems.forEach(file -> validateChildItems(file, resultFiles, parts));
+    @Override
+    public void writeToSharepoint(ISharepointFile iSharepointFile, byte[] data, boolean appendData) {
+        ISharepointFile drive = this.determineDriveFile(iSharepointFile);
+        if (data.length > 0 && !appendData){
+            this.iGraphClientDetails.logBasic("Create new file content on sharepoint.");
+            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data);
+            this.iSharepointApi.updateDriveItemByDriveIdAndItemId(drive.getId(), iSharepointFile.getId(), byteArrayInputStream);
+        } else if (data.length > 0){
+            this.iGraphClientDetails.logBasic("Update existing file content on sharepoint.");
+            try {
+                InputStream inputStream = this.getInputStream(iSharepointFile);
+                byte[] existingContent = ByteOperation.readInputStreamToByteArray(inputStream);
+                byte[] outputContent = ByteOperation.appendByteArraysWithComparison(existingContent, data, this.iGraphClientDetails);
+                ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(outputContent);
+                this.iSharepointApi.updateDriveItemByDriveIdAndItemId(drive.getId(), iSharepointFile.getId(), byteArrayInputStream);
+            } catch (IOException e) {
+                this.iGraphClientDetails.logError("Error loading data from sharepoint for append operation.");
+                e.printStackTrace();
+            }
         }
     }
-
-    private boolean checkCounter(List<ISharepointFile> filesToCheck){
-        return filesToCheck.stream().anyMatch(iSharepointFile -> ((ICountableSharepointFile) iSharepointFile).getFileCounter().getCount() <= 0);
-    }
-
-    private List<ISharepointFile> getMatchingRootItems(ICountableSharepointFile drive, String[] parts){
-        List<ISharepointFile> rootDirectory = getRootItems(drive, MAX_SITES_TO_FETCH);
-        drive.getFileCounter().decrement(1);
-        return rootDirectory.stream()
-                .filter(iSharepointFile -> drive.getFileCounter().getCount() <= 0 ? iSharepointFile.getName().equals(parts[parts.length - 1]) : iSharepointFile.getName().equals(parts[4])).collect(Collectors.toList());
-    }
-
-    //Responsibility of the caller to add child
-    private List<ISharepointFile> getChildren(ISharepointFile physicalParent, ISharepointFile virtualParent, int maxNrOfResults) {
-        List<ISharepointFile> iSharepointFiles = new ArrayList<>();
-        int top = Math.max(maxNrOfResults, 100);
-        ISharepointFile driveFile = determineDriveFile(physicalParent);
-
-        DriveItemCollectionResponse items = this.iSharepointApi.getItemsByDriveIdAndItemId(driveFile.getId(), physicalParent.getId(), top);
-
-        List<DriveItem> driveItems = items.getValue();
-        if (driveItems.size() != 0) {
-            driveItems.forEach(driveItem -> {
-                Folder folder = driveItem.getFolder();
-                int childrenCount = folder != null ? folder.getChildCount() : 0;
-                ISharepointFile item = new SharepointObject(driveItem.getId(), driveItem.getName(), virtualParent, childrenCount);
-                iSharepointFiles.add(item);
-            });
-        }
-        return iSharepointFiles;
-    }
-
-    private ISharepointFile determineDriveFile(ISharepointFile iSharepointFile){
-        ISharepointFile parent = iSharepointFile.getParentObject();
-        while (parent.getParentObject() != null && parent.getParentObject().getParentObject() != null){
-            parent = parent.getParentObject();
-        }
-        return parent;
-    }
-
 }

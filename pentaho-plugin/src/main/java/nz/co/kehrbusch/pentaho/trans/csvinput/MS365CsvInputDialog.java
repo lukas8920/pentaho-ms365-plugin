@@ -5,6 +5,7 @@ import nz.co.kehrbusch.pentaho.connections.manage.ConnectionDetailsInterface;
 import nz.co.kehrbusch.pentaho.connections.manage.GraphConnectionDetails;
 import nz.co.kehrbusch.pentaho.connections.manage.MS365ConnectionManager;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.MS365OpenSaveDialog;
+import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.BaseEntity;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365FileProvider;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.MS365File;
 import org.eclipse.swt.SWT;
@@ -282,9 +283,12 @@ public class MS365CsvInputDialog extends CsvInputDialog {
                 ms365OpenSaveDialog.open(fileDialogOperation);
 
                 if (ms365OpenSaveDialog.getSelectedFile() != null){
-                    MS365CsvInputDialog.this.selectedFile = ms365OpenSaveDialog.getSelectedFile();
-                    MS365CsvInputDialog.this.wFilename.setText(ms365OpenSaveDialog.getSelectedFile().getPath() + ms365OpenSaveDialog.getSelectedFile().getName());
-                    MS365CsvInputDialog.this.wGet.setVisible(true);
+                    BaseEntity baseEntity = ms365OpenSaveDialog.getSelectedFile();
+                    if (baseEntity != null){
+                        MS365CsvInputDialog.this.selectedFile = baseEntity instanceof MS365File ? (MS365File) baseEntity : null;
+                        MS365CsvInputDialog.this.wFilename.setText(ms365OpenSaveDialog.getSelectedFile().getPath() + ms365OpenSaveDialog.getSelectedFile().getName());
+                        MS365CsvInputDialog.this.wGet.setVisible(true);
+                    }
                 }
             } else if (!(connections.length > 0)){
                 MessageBox mb = new MessageBox(shell, SWT.OK | SWT.ICON_ERROR);
