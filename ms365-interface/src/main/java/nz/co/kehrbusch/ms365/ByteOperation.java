@@ -29,12 +29,20 @@ class ByteOperation {
     public static byte[] readInputStreamToByteArray(InputStream inputStream) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
-        int length;
+        try {
 
-        while ((length = inputStream.read(buffer)) != -1) {
-            byteArrayOutputStream.write(buffer, 0, length);
+            int length;
+
+            while ((length = inputStream.read(buffer)) != -1) {
+                byteArrayOutputStream.write(buffer, 0, length);
+            }
+
+            return byteArrayOutputStream.toByteArray();
+        } catch (Exception e){
+
+        } finally {
+            byteArrayOutputStream.close();
         }
-
-        return byteArrayOutputStream.toByteArray();
+        return buffer;
     }
 }
