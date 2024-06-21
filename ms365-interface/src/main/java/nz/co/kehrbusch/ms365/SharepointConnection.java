@@ -145,23 +145,37 @@ class SharepointConnection extends SharepointBaseProcessor implements ISharepoin
 
     @Override
     public void writeToSharepoint(ISharepointFile iSharepointFile, byte[] data, boolean appendData) {
-        ISharepointFile drive = this.determineDriveFile(iSharepointFile);
-        if (data.length > 0 && !appendData){
-            this.iGraphClientDetails.logBasic("Create new file content on sharepoint.");
-            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data);
-            this.iSharepointApi.updateDriveItemByDriveIdAndItemId(drive.getId(), iSharepointFile.getId(), byteArrayInputStream);
-        } else if (data.length > 0){
-            this.iGraphClientDetails.logBasic("Update existing file content on sharepoint.");
-            try {
-                InputStream inputStream = this.getInputStream(iSharepointFile);
+        InputStream inputStream = null;
+        ByteArrayInputStream byteArrayInputStream = null;
+        try {
+            ISharepointFile drive = this.determineDriveFile(iSharepointFile);
+            if (data.length > 0 && !appendData){
+                this.iGraphClientDetails.logBasic("Create new file content on sharepoint.");
+                byteArrayInputStream = new ByteArrayInputStream(data);
+                this.iSharepointApi.updateDriveItemByDriveIdAndItemId(drive.getId(), iSharepointFile.getId(), byteArrayInputStream);
+            } else if (data.length > 0){
+                this.iGraphClientDetails.logBasic("Update existing file content on sharepoint.");
+                inputStream = this.getInputStream(iSharepointFile);
                 byte[] existingContent = ByteOperation.readInputStreamToByteArray(inputStream);
                 byte[] outputContent = ByteOperation.appendByteArraysWithComparison(existingContent, data, this.iGraphClientDetails);
-                ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(outputContent);
+                byteArrayInputStream = new ByteArrayInputStream(outputContent);
                 this.iSharepointApi.updateDriveItemByDriveIdAndItemId(drive.getId(), iSharepointFile.getId(), byteArrayInputStream);
-            } catch (IOException e) {
-                this.iGraphClientDetails.logError("Error loading data from sharepoint for append operation.");
-                e.printStackTrace();
+            }
+        } catch (Exception e){
+            this.iGraphClientDetails.logError("Error writing to sharepoint.");
+            e.printStackTrace();
+        } finally {
+            try {
+                if (inputStream != null){
+                    inputStream.close();
+                }
+                if (byteArrayInputStream != null){
+                    byteArrayInputStream.close();
+                }
+            } catch (IOException e){
+                this.iGraphClientDetails.logError("Error closing streams of writing operation.");
             }
         }
+
     }
 }
