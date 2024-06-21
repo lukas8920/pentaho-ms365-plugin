@@ -2,6 +2,7 @@ package nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers;
 
 import nz.co.kehrbusch.ms365.interfaces.ISharepointConnection;
 import nz.co.kehrbusch.ms365.interfaces.entities.ISharepointFile;
+import org.pentaho.di.plugins.fileopensave.api.providers.Directory;
 import org.pentaho.di.plugins.fileopensave.api.providers.Entity;
 import org.pentaho.di.plugins.fileopensave.api.providers.File;
 import org.pentaho.di.plugins.fileopensave.api.providers.Providerable;
@@ -40,7 +41,8 @@ public abstract class BaseEntity implements Entity, Providerable, File, ISharepo
         this.childrenCount = childrenCount;
     }
 
-    @Override public String getPath() {
+    @Override
+    public String getPath() {
         StringBuilder builder = new StringBuilder();
         if (parent == null){
             return "/sharepoint/";
@@ -53,6 +55,9 @@ public abstract class BaseEntity implements Entity, Providerable, File, ISharepo
                 parentDirectory = parentDirectory.getParentObject();
             }
             builder.insert(0, "/sharepoint");
+            if (this instanceof Directory){
+                builder.append(this.getName() + "/");
+            }
             return builder.toString();
         }
     }
