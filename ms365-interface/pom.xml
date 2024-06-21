@@ -5,7 +5,7 @@
     <parent>
         <artifactId>ms365-plugin</artifactId>
         <groupId>nz.co.kehrbusch</groupId>
-        <version>0.0.3</version>
+        <version>0.0.4</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -82,7 +82,7 @@
                         </goals>
                         <configuration>
                             <appendAssemblyId>false</appendAssemblyId>
-                            <outputDirectory>/home/lukas/Downloads/pdi-ce-9.4.0.0-343/data-integration/plugins/ms365-plugin-0.0.3/lib</outputDirectory>
+                            <outputDirectory>${PENTAHO_HOME}/data-integration/plugins/${parent.artifactId}-${parent.version}/lib</outputDirectory>
                             <finalName>ms365-interface-${project.version}</finalName>
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
