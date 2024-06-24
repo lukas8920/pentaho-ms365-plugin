@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.nio.file.InvalidPathException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -102,8 +103,13 @@ class SharepointConnection extends SharepointBaseProcessor implements ISharepoin
 
     @Override
     public ISharepointFile inflateTreeByPath(String path, boolean createIfNotExists) throws InvalidPathException {
-        log.info("Inflate tree for: " + path);
-        String[] parts = path.split("/");
+        AtomicBoolean rootFlag = new AtomicBoolean(false);
+        this.iGraphClientDetails.logBasic("Inflate tree for: " + path);
+        String[] tmpParts = path.split("/");
+        if (tmpParts.length > 0 && tmpParts[tmpParts.length - 1].isEmpty()) {
+            tmpParts = Arrays.copyOf(tmpParts, tmpParts.length - 1);
+        }
+        String[] parts = tmpParts;
         List<ISharepointFile> resultFiles = new ArrayList<>();
 
         this.iGraphClientDetails.logDebug("Try to identify path provided by user");
@@ -122,9 +128,19 @@ class SharepointConnection extends SharepointBaseProcessor implements ISharepoin
             List<ISharepointFile> items = getMatchingRootItems((ICountableSharepointFile) drive, parts);
             rootItems.addAll(items);
             if (((ICountableSharepointFile) drive).getFileCounter().getCount() <= 0) resultFiles.addAll(items);
+            if (parts.length == 4 && path.endsWith("/") && !rootFlag.get()){
+                this.iGraphClientDetails.logDebug("Query root item of sharepoint");
+                ISharepointFile root = this.getRootItem(drive);
+                resultFiles.add(root);
+                rootItems.add(root);
+                rootFlag.set(true);
+            }
         });
-        if (rootItems.isEmpty() && !createIfNotExists) throw new InvalidPathException("No matching root item found.", "User Input");
+        if (rootItems.isEmpty() && !createIfNotExists){
+            throw new InvalidPathException("No matching root item found.", "User Input");
+        }
         if (rootItems.isEmpty()) return this.createRootPath(drives.get(0), parts);
+
         if (!resultFiles.isEmpty()) return resultFiles.get(0);
         this.iGraphClientDetails.logDebug("Filtered root items: ");
         rootItems.forEach(item -> this.iGraphClientDetails.logDebug("Root item: " + item.getName()));
@@ -138,10 +154,9 @@ class SharepointConnection extends SharepointBaseProcessor implements ISharepoin
         });
 
         if (resultFiles.isEmpty()) throw new InvalidPathException("No matching item found.", "User Input");
+        this.iGraphClientDetails.logDebug("Item found: " + resultFiles.get(0).getName());
         return resultFiles.get(0);
     }
-
-
 
     @Override
     public void writeToSharepoint(ISharepointFile iSharepointFile, byte[] data, boolean appendData) {

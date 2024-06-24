@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class MS365File extends BaseEntity implements File, IStreamProvider {
+    public static final int MAX_Files_TO_FETCH = 100;
+
     private String name;
     private String id;
     private InputStream inputStream;
@@ -43,6 +45,14 @@ public class MS365File extends BaseEntity implements File, IStreamProvider {
 
     public void setName(String name){
         this.name = name;
+    }
+
+    public String getExtension(){
+        String[] split = getName().split("\\.");
+        if (split.length > 1){
+            return split[1];
+        }
+        return  "";
     }
 
     @Override

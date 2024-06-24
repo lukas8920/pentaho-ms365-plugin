@@ -19,7 +19,7 @@ public class MS365CsvInput extends MS365BaseCsvInput {
     private static final Logger log = Logger.getLogger(MS365CsvInput.class.getName());
 
     private MS365CsvInputMeta ms365CsvInputMeta;
-    private SharepointFileWrapper sharepointFileWrapper;
+    private SharepointFileWrapper<MS365CsvInputMeta> sharepointFileWrapper;
     private GraphConnectionDetails graphConnectionDetails;
 
     public MS365CsvInput(StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta, Trans trans) {
@@ -38,7 +38,7 @@ public class MS365CsvInput extends MS365BaseCsvInput {
         }
 
         this.graphConnectionDetails = (GraphConnectionDetails) connectionManager.provideDetailsByConnectionName(this.ms365CsvInputMeta.getConnectionName());
-        this.sharepointFileWrapper = new SharepointFileWrapper(this.ms365CsvInputMeta, graphConnectionDetails.getISharepointConnection(), this.getLogChannel());
+        this.sharepointFileWrapper = new SharepointFileWrapper<>(this.ms365CsvInputMeta, graphConnectionDetails.getISharepointConnection(), this.getLogChannel());
     }
 
     @Override

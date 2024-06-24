@@ -1591,9 +1591,9 @@ public class MS365OpenSaveDialog extends Dialog implements FileDetails {
     }
 
     public BaseEntity getSelectedFile() {
-        if (selectedFile instanceof Directory && createdFilename != null && createdFilename.getParentObject() != null){
+        if (!fileDialogOperation.getCommand().equals(FileDialogOperation.SELECT_FILE_FOLDER) && selectedFile instanceof Directory && createdFilename != null && createdFilename.getParentObject() != null){
             return this.createdFilename;
-        } else if (selectedFile instanceof MS365File){
+        } else if (selectedFile instanceof MS365File || this.fileDialogOperation.getCommand().equals(FileDialogOperation.SELECT_FILE_FOLDER)){
             return selectedFile;
         } else if (selectedFile instanceof Directory && createdFilename == null){
             this.selectedFile = null;

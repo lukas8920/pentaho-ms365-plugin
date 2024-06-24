@@ -28,7 +28,8 @@ public abstract class BaseEntity implements Entity, Providerable, File, ISharepo
 
     protected final List<BaseEntity> children = new ArrayList<>();
     
-    @Override public String getProvider() {
+    @Override
+    public String getProvider() {
         return provider;
     }
 
@@ -61,6 +62,8 @@ public abstract class BaseEntity implements Entity, Providerable, File, ISharepo
             return builder.toString();
         }
     }
+
+    public abstract void setId(String id);
 
     public BaseEntity getParentObject(){
         return this.parent;

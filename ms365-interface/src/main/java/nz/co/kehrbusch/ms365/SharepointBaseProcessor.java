@@ -76,6 +76,11 @@ public abstract class SharepointBaseProcessor {
         return filesToCheck.stream().anyMatch(iSharepointFile -> ((ICountableSharepointFile) iSharepointFile).getFileCounter().getCount() <= 0);
     }
 
+    protected ISharepointFile getRootItem(ISharepointFile parent){
+        DriveItem rootItem = this.iSharepointApi.getRootItemByDrivId(parent.getId());
+        return new SharepointObject(rootItem.getId(), rootItem.getName(), parent);
+    }
+
     protected List<ISharepointFile> getMatchingRootItems(ICountableSharepointFile drive, String[] parts){
         List<ISharepointFile> rootDirectory = getRootItems(drive, MAX_SITES_TO_FETCH);
         drive.getFileCounter().decrement(1);
@@ -106,7 +111,7 @@ public abstract class SharepointBaseProcessor {
 
     protected ISharepointFile determineDriveFile(ISharepointFile iSharepointFile){
         ISharepointFile parent = iSharepointFile.getParentObject();
-        while (parent.getParentObject() != null && parent.getParentObject().getParentObject() != null){
+        while (parent != null && parent.getParentObject() != null && parent.getParentObject().getParentObject() != null){
             parent = parent.getParentObject();
         }
         return parent;
