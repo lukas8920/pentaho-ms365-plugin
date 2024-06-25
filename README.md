@@ -19,7 +19,7 @@ The plugin can be built from Source code by installing the prerequisites and by 
 
 1. Clone the Git repository
     ```
-    $ git clone https://github.com/xy.git
+    $ git clone https://github.com/lukas8920/pentaho-kettle.git
     ```
 
 2. Set environment variable PENTAHO_HOME for installation directory 
