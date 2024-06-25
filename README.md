@@ -23,6 +23,7 @@ The plugin can be built from Source code by installing the prerequisites and by 
     ```
 
 2. Set environment variable PENTAHO_HOME for installation directory 
+
     e.g. Windows:
     ```
     set PENTAHO_HOME="/home/lukas/pdi-ce-9.4.0.0-343"
@@ -32,13 +33,13 @@ The plugin can be built from Source code by installing the prerequisites and by 
     export PENTAHO_HOME="/home/lukas/pdi-ce-9.4.0.0-343"
     ```
 
-3. Compile a package
+4. Compile a package
     ```
     $ cd ms365-plugin
     $ mvn clean package
     ```
 
-4. The plugin in the automatically available in the Plugin directory of your Pentaho installation
+5. The plugin in the automatically available in the Plugin directory of your Pentaho installation
 
 ### Installing the plugin
 * Tested with Pentaho Data Integration - Community Edition - version: 9.4.0.0-324 on Linux
