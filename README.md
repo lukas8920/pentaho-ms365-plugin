@@ -39,7 +39,7 @@ The plugin can be built from Source code by installing the prerequisites and by 
     $ mvn clean package
     ```
 
-5. The plugin in the automatically available in the Plugin directory of your Pentaho installation
+5. The plugin is then automatically available in the Plugin directory of your Pentaho installation
 
 ### Installing the plugin
 * Tested with Pentaho Data Integration - Community Edition - version: 9.4.0.0-324 on Linux
