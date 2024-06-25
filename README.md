@@ -51,4 +51,8 @@ When built from the source, no additional steps are necessary. When downloaded, 
 2. Create an MS365 connection in Pentaho with the access credentials taken from the azure portal
 3. Ready to use the additional MS365 steps of the plugin
 
+https://github.com/lukas8920/pentaho-kettle/assets/42778010/c86a40a9-cfdb-4489-876b-a76f7187c4b3
+
+
+
 Below video shows how you can set up a simple application in Pentaho.
