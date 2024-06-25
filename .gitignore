@@ -9,7 +9,6 @@ target/
 *.idea
 *.iml
 *.original
-*.properties
 *.ipr
 *.iws
 
