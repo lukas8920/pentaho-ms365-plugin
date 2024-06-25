@@ -46,6 +46,12 @@ The plugin can be built from Source code by installing the prerequisites and by 
 
 When built from the source, no additional steps are necessary. When downloaded, the files need to be placed in the plugins directory of your PDI installation.
 
+### Steps in scope
+
+* CSV file input
+* Text file input
+* Text file output
+
 ## Using the plugin
 
 1. Set up a client application in azure portal
