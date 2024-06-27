@@ -1,6 +1,5 @@
 package nz.co.kehrbusch.pentaho.trans.csvinput;
 
-import nz.co.kehrbusch.pentaho.util.file.SharepointWrapperMeta;
 import org.eclipse.swt.widgets.Shell;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;

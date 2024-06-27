@@ -102,7 +102,14 @@ public abstract class SharepointBaseProcessor {
                 Folder folder = driveItem.getFolder();
                 //set to at least 1 if instance of folder
                 int childrenCount = folder != null ? (folder.getChildCount() == 0 ? 1 : folder.getChildCount()) : 0;
-                ISharepointFile item = new SharepointObject(driveItem.getId(), driveItem.getName(), virtualParent, childrenCount);
+                SharepointObject item;
+                if (childrenCount > 0){
+                    item = new SharepointObject(driveItem.getId(), driveItem.getName(), virtualParent, childrenCount);
+                } else {
+                    this.iGraphClientDetails.logDebug("Create details sharepoin object: " + driveItem.getName());
+                    item = new DetailsSharepointObject(driveItem, virtualParent);
+                    item.setChildrenCount(childrenCount);
+                }
                 iSharepointFiles.add(item);
             });
         }
@@ -138,14 +145,14 @@ public abstract class SharepointBaseProcessor {
                 driveItem.setFile(new File());
 
                 DriveItem createdFile = this.iSharepointApi.createNewItemByDriveIdandParentIdandName(drive.getId(), mPhysicalParent.getId(), driveItem);
-                mPhysicalParent = new SharepointObject(createdFile, mVirtualParent);
+                mPhysicalParent = new DetailsSharepointObject(createdFile, mVirtualParent);
             } else {
                 this.iGraphClientDetails.logBasic("Create folder: " + part);
                 DriveItem driveItem = new DriveItem();
                 driveItem.setName(part);
                 driveItem.setFolder(new Folder());
                 DriveItem createdFile = this.iSharepointApi.createNewItemByDriveIdandParentIdandName(drive.getId(), mPhysicalParent.getId(), driveItem);
-                mPhysicalParent = new SharepointObject(createdFile, mVirtualParent);
+                mPhysicalParent = new DetailsSharepointObject(createdFile, mVirtualParent);
             }
             mVirtualParent = mPhysicalParent;
         }

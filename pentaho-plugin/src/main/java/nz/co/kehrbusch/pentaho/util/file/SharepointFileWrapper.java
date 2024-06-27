@@ -1,6 +1,7 @@
 package nz.co.kehrbusch.pentaho.util.file;
 
 import nz.co.kehrbusch.ms365.interfaces.ISharepointConnection;
+import nz.co.kehrbusch.ms365.interfaces.entities.IDetailsSharepointFile;
 import nz.co.kehrbusch.ms365.interfaces.entities.ISharepointFile;
 import nz.co.kehrbusch.ms365.interfaces.entities.IStreamProvider;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.BaseEntity;
@@ -41,17 +42,21 @@ public class SharepointFileWrapper<T> {
                 String[] realmask = ((TextFileInputMeta) t).inputFiles.fileMask;
                 String[] realExcludeMask = ((TextFileInputMeta) t).inputFiles.excludeFileMask;
 
-                for (int i = 0; i < filenames.length; i++){
-                    if (filenames[i] != null){
-                        ISharepointFile iSharepointFile = iSharepointConnection.inflateTreeByPath(filenames[i]);
-                        List<IStreamProvider> iStreamProviders = processBaseSharepointFile(iSharepointFile, realmask[i], realExcludeMask[i]);
-                        this.streamProviders.addAll(iStreamProviders);
-                    }
-                }
+                this.addIStreamProvider(filenames, realmask, realExcludeMask);
             } else if (t instanceof CsvInputMeta){
                 ISharepointFile iSharepointFile = iSharepointConnection.inflateTreeByPath(((CsvInputMeta) t).getFilename());
                 List<IStreamProvider> streamProviders = processBaseSharepointFile(iSharepointFile);
                 this.streamProviders.addAll(streamProviders);
+            }
+        }
+    }
+
+    public void addIStreamProvider(String[] filenames, String[] realmask, String[] realExcludeMask){
+        for (int i = 0; i < filenames.length; i++){
+            if (filenames[i] != null){
+                ISharepointFile iSharepointFile = iSharepointConnection.inflateTreeByPath(filenames[i]);
+                List<IStreamProvider> iStreamProviders = processBaseSharepointFile(iSharepointFile, realmask[i], realExcludeMask[i]);
+                this.streamProviders.addAll(iStreamProviders);
             }
         }
     }
@@ -90,7 +95,15 @@ public class SharepointFileWrapper<T> {
                     ms365File.setName(file.getName());
                     ms365File.setChildrenCount(file.getChildrenCount());
                     ms365File.setParent((BaseEntity) parentDirectory);
+                    if (file instanceof IDetailsSharepointFile){
+                        channel.logBasic("Instance of details sharepoint file");
+                        ms365File.setCreatedDate(((IDetailsSharepointFile) file).getCreatedDate());
+                        ms365File.setWebUrl(((IDetailsSharepointFile) file).getWebUrl());
+                        ms365File.setLastModifiedDate(((IDetailsSharepointFile) file).getModifiedDate());
+                        ms365File.setSize(file.getSize());
+                    }
                     ((BaseEntity) parentDirectory).addChild(ms365File);
+                    ms365File.clearRootDirectory();
                     iStreamProviders.add(ms365File);
                 });
             }
@@ -144,6 +157,12 @@ public class SharepointFileWrapper<T> {
         ms365File.setName(iSharepointFile.getName());
         ms365File.setId(iSharepointFile.getId());
         ms365File.setSize(iSharepointFile.getSize());
+        if (iSharepointFile instanceof IDetailsSharepointFile){
+            channel.logBasic("Instance of details sharepoint file");
+            ms365File.setCreatedDate(((IDetailsSharepointFile) iSharepointFile).getCreatedDate());
+            ms365File.setWebUrl(((IDetailsSharepointFile) iSharepointFile).getWebUrl());
+            ms365File.setLastModifiedDate(((IDetailsSharepointFile) iSharepointFile).getModifiedDate());
+        }
         mapBase(iSharepointFile, ms365File);
         return ms365File;
     }

@@ -1,4 +1,4 @@
-package nz.co.kehrbusch.pentaho.trans.textfileinput.listeners;
+package nz.co.kehrbusch.pentaho.util.listeners;
 
 import nz.co.kehrbusch.pentaho.trans.textfileinput.MS365TextFileInputDialog;
 import org.eclipse.swt.widgets.Event;
@@ -15,9 +15,9 @@ public class LsFirst implements Listener {
     public void handleEvent(Event event) {
         ms365TextFileInputDialog.getLblLoadingInfo().setVisible(true);
         ms365TextFileInputDialog.getWbFirst().setEnabled(false);
-        ms365TextFileInputDialog.handleAfterFilesAvailable(((iSharepointConnection, wrapper) -> {
+        Handler.handleAfterFilesAvailable(((iSharepointConnection, wrapper) -> {
             ms365TextFileInputDialog.first(iSharepointConnection, wrapper, false);
             ms365TextFileInputDialog.getWbFirst().setEnabled(true);
-        }));
+        }), this.ms365TextFileInputDialog);
     }
 }

@@ -67,7 +67,7 @@ public class SharepointObject implements ICountableSharepointFile {
 
     @Override
     public int getSize() {
-        return this.size;
+        return  this.size;
     }
 
     public void setSize(int size){
@@ -86,6 +86,10 @@ public class SharepointObject implements ICountableSharepointFile {
 
     public void setParent(ISharepointFile iSharepointFile){
         this.parent = iSharepointFile;
+    }
+
+    public void removeChild(ISharepointFile iSharepointFile){
+        this.children.remove(iSharepointFile);
     }
 
     public void setId(String id) {

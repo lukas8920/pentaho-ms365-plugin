@@ -1,11 +1,13 @@
 package nz.co.kehrbusch.pentaho.trans.textfileinput;
 
-import nz.co.kehrbusch.pentaho.util.file.SharepointWrapperMeta;
+import nz.co.kehrbusch.ms365.interfaces.ISharepointConnection;
+import nz.co.kehrbusch.pentaho.util.file.SharepointFileWrapper;
 import org.eclipse.swt.widgets.Shell;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleXMLException;
+import org.pentaho.di.core.logging.LogChannelInterface;
 import org.pentaho.di.core.xml.XMLHandler;
 import org.pentaho.di.repository.ObjectId;
 import org.pentaho.di.repository.Repository;
@@ -23,7 +25,7 @@ import java.util.List;
         name = "MS365TextFileInput.Name",
         image = "images/TFI.svg",
         categoryDescription = "MS365Plugin.Category.MS365Input",
-        i18nPackageName = "nz.co.kehrbusch.pentaho.trans.textfileinput",
+        i18nPackageName = "nz.co.kehrbusch.pentaho.trans.getfilenames",
         documentationUrl = "MS365TextFileInput.Documentation"
 )
 public class MS365TextFileInputMeta extends TextFileInputMeta {

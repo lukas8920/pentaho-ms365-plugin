@@ -120,6 +120,10 @@ public abstract class BaseEntity implements Entity, Providerable, File, ISharepo
         this.children.add(baseEntity);
     }
 
+    public void removeChild(BaseEntity baseEntity){
+        this.children.remove(baseEntity);
+    }
+
     public abstract void setName(String name);
 
     public abstract String getName();

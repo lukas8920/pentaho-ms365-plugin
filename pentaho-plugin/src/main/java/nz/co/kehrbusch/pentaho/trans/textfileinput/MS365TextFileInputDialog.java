@@ -5,16 +5,12 @@ import nz.co.kehrbusch.ms365.interfaces.entities.IStreamProvider;
 import nz.co.kehrbusch.pentaho.connections.manage.ConnectionDetailsInterface;
 import nz.co.kehrbusch.pentaho.connections.manage.GraphConnectionDetails;
 import nz.co.kehrbusch.pentaho.connections.manage.MS365ConnectionManager;
-import nz.co.kehrbusch.pentaho.trans.textfileinput.listeners.*;
 import nz.co.kehrbusch.pentaho.util.file.SharepointFileWrapper;
-import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.MS365OpenSaveDialog;
+import nz.co.kehrbusch.pentaho.util.listeners.*;
 import nz.co.kehrbusch.pentaho.util.ms365opensavedialog.providers.*;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.ScrolledComposite;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.widgets.*;
@@ -26,7 +22,6 @@ import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.logging.LogChannel;
 import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.i18n.BaseMessages;
-import org.pentaho.di.plugins.fileopensave.service.ProviderServiceService;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.TransPreviewFactory;
@@ -35,7 +30,6 @@ import org.pentaho.di.trans.steps.fileinput.text.BufferedInputStreamReader;
 import org.pentaho.di.trans.steps.fileinput.text.EncodingType;
 import org.pentaho.di.trans.steps.fileinput.text.TextFileInputMeta;
 import org.pentaho.di.trans.steps.fileinput.text.TextFileInputUtils;
-import org.pentaho.di.ui.core.FileDialogOperation;
 import org.pentaho.di.ui.core.dialog.*;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
@@ -50,10 +44,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
-public class MS365TextFileInputDialog extends TextFileInputDialog {
+public class MS365TextFileInputDialog extends TextFileInputDialog implements LsSelectFileFolder.FileFolderInput, LsWbaSelection.WbaSelectionInput, LsShowFiles.ShowFilesInput<MS365TextFileInputMeta> {
     private static final Class<?> PKG = MS365TextFileInputDialog.class;
 
     private boolean isInitialized = false;
@@ -405,40 +398,8 @@ public class MS365TextFileInputDialog extends TextFileInputDialog {
         return retval;
     }
 
-    public void showFiles(SharepointFileWrapper<MS365TextFileInputMeta> wrapper) {
-        String[] files = wrapper.getStreamProviders().stream().map(file -> file.getPath() + file.getName()).toArray(String[]::new);
-        if (files.length > 0) {
-            EnterSelectionDialog esd = new EnterSelectionDialog(this.shell, files, "Files read", "Files read:");
-            esd.setViewOnly();
-            esd.open();
-        } else {
-            MessageBox mb = new MessageBox(this.shell, 33);
-            mb.setMessage(BaseMessages.getString(PKG, "MS365TextFileInputDialog.NoFilesFound.DialogMessage", new String[0]));
-            mb.setText(BaseMessages.getString(PKG, "System.Dialog.Error.Title", new String[0]));
-            mb.open();
-        }
-
-    }
-
-    public void handleAfterFilesAvailable(BiConsumer<ISharepointConnection, SharepointFileWrapper<MS365TextFileInputMeta>> runnable){
-        String connection = wConnectionField.getText();
-        MS365TextFileInputMeta info = new MS365TextFileInputMeta();
-        super.populateMeta(info);
-
-        new Thread(() -> {
-            MS365ConnectionManager connectionManager = MS365ConnectionManager.getInstance(new LogChannel());
-            GraphConnectionDetails graphConnectionDetails = (GraphConnectionDetails) connectionManager.provideDetailsByConnectionName(connection);
-            ISharepointConnection iSharepointConnection = graphConnectionDetails.getISharepointConnection();
-
-            SharepointFileWrapper<MS365TextFileInputMeta> wrapper = new SharepointFileWrapper<>(info, iSharepointConnection, new LogChannel());
-
-            if (!MS365TextFileInputDialog.this.shell.isDisposed()){
-                MS365TextFileInputDialog.this.shell.getDisplay().asyncExec(() -> {
-                    runnable.accept(iSharepointConnection, wrapper);
-                    MS365TextFileInputDialog.this.lblLoadingInfo.setVisible(false);
-                });
-            }
-        }).start();
+    public Class<?> getPackage(){
+        return PKG;
     }
 
     public Button getWbShowFiles(){
@@ -455,6 +416,11 @@ public class MS365TextFileInputDialog extends TextFileInputDialog {
 
     public Label getLblLoadingInfo(){
         return this.lblLoadingInfo;
+    }
+
+    @Override
+    public MS365TextFileInputMeta getMeta() {
+        return this.ms365TextFileInputMeta;
     }
 
     public TableView getwFilenameList(){
@@ -479,6 +445,11 @@ public class MS365TextFileInputDialog extends TextFileInputDialog {
 
     public CCombo getwConnectionField(){
         return this.wConnectionField;
+    }
+
+    @Override
+    public void populateGenericMeta(MS365TextFileInputMeta ms365TextFileInputMeta) {
+        super.populateMeta(ms365TextFileInputMeta);
     }
 
     public Button getWGet(){
