@@ -7,7 +7,7 @@
     <groupId>nz.co.kehrbusch</groupId>
     <artifactId>ms365-plugin</artifactId>
     <packaging>pom</packaging>
-    <version>0.0.4</version>
+    <version>0.0.5</version>
 
     <modules>
         <module>ms365-interface</module>
