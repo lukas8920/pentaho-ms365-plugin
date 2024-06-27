@@ -51,6 +51,7 @@ When built from the source, no additional steps are necessary. When downloaded, 
 * CSV file input
 * Text file input
 * Text file output
+* Get file names
 
 ## Using the plugin
 
