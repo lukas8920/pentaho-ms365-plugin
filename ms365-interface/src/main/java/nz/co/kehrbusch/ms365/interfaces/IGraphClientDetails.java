@@ -5,4 +5,8 @@ public interface IGraphClientDetails extends ILoggable {
     String getTenantId();
     String getClientId();
     String getPassword();
+    String getProxyHost();
+    String getProxyPort();
+    String getProxyUser();
+    String getProxyPassword();
 }

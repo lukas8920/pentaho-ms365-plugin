@@ -18,6 +18,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static nz.co.kehrbusch.ms365.GraphConnection.generateClientWithProxy;
+import static nz.co.kehrbusch.ms365.GraphConnection.generateClientWithoutProxy;
+
 public abstract class SharepointBaseProcessor {
     protected static final int MAX_SUPPORTED_PATH_DEPTH = 10;
     protected static final int MAX_SITES_TO_FETCH = 100;
@@ -30,15 +33,16 @@ public abstract class SharepointBaseProcessor {
 
     public SharepointBaseProcessor(IGraphClientDetails iGraphClientDetails){
         this.iGraphClientDetails = iGraphClientDetails;
-        // Authenticate with Azure AD using the Client Secret Credential
-        ClientSecretCredential clientSecretCredential = new ClientSecretCredentialBuilder()
-                .clientId(iGraphClientDetails.getClientId())
-                .clientSecret(iGraphClientDetails.getPassword())
-                .tenantId(iGraphClientDetails.getTenantId())
-                .build();
-
-        // Create a GraphServiceClient with the AuthProvider
-        GraphServiceClient graphServiceClient = new GraphServiceClient(clientSecretCredential, iGraphClientDetails.getScope());
+        GraphServiceClient graphServiceClient = null;
+        if (!iGraphClientDetails.getProxyHost().isEmpty() && !iGraphClientDetails.getProxyPort().isEmpty()){
+            try {
+                graphServiceClient = generateClientWithProxy(iGraphClientDetails);
+            } catch (Exception e) {
+                iGraphClientDetails.logError("Proxy Error during set up of GraphServiceClient.");
+            }
+        } else {
+            graphServiceClient = generateClientWithoutProxy(iGraphClientDetails);
+        }
         this.iSharepointApi = new SharepointApi(graphServiceClient);
     }
 

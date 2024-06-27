@@ -1,6 +1,5 @@
 package nz.co.kehrbusch.ms365;
 
-import com.microsoft.graph.drives.item.items.item.createuploadsession.CreateUploadSessionPostRequestBody;
 import com.microsoft.graph.models.*;
 import com.microsoft.graph.serviceclient.GraphServiceClient;
 import nz.co.kehrbusch.ms365.interfaces.ISharepointApi;

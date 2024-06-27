@@ -31,6 +31,11 @@ public class GraphConnectionDetails implements ConnectionDetailsInterface, IGrap
     private String clientId = "";
     private String password = "";
 
+    private String proxyHost = "";
+    private String proxyPort = "";
+    private String proxyUser = "";
+    private String proxyPassword = "";
+
     private boolean hasDuplicateConnectionName = false;
 
     public GraphConnectionDetails(GraphConnectionType graphConnectionType){
@@ -112,6 +117,26 @@ public class GraphConnectionDetails implements ConnectionDetailsInterface, IGrap
         Element descriptionElement = doc.createElement("description");
         descriptionElement.appendChild(doc.createTextNode(this.description));
         element.appendChild(descriptionElement);
+
+        // Create and append <clientId> element
+        Element proxyHost = doc.createElement("proxyhost");
+        proxyHost.appendChild(doc.createTextNode(this.proxyHost));
+        element.appendChild(proxyHost);
+
+        // Create and append <clientId> element
+        Element proxyPort = doc.createElement("proxyport");
+        proxyPort.appendChild(doc.createTextNode(this.proxyPort));
+        element.appendChild(proxyPort);
+
+        // Create and append <clientId> element
+        Element proxyUser = doc.createElement("proxyuser");
+        proxyUser.appendChild(doc.createTextNode(this.proxyUser));
+        element.appendChild(proxyUser);
+
+        // Create and append <clientId> element
+        Element proxyPassword = doc.createElement("proxypassword");
+        proxyPassword.appendChild(doc.createTextNode(this.proxyPassword));
+        element.appendChild(proxyPassword);
     }
 
     @Override
@@ -123,6 +148,10 @@ public class GraphConnectionDetails implements ConnectionDetailsInterface, IGrap
         graphConnectionDetails.setDescription(this.description);
         graphConnectionDetails.setClientId(this.clientId);
         graphConnectionDetails.setScope(this.scope);
+        graphConnectionDetails.setProxyHost(this.proxyHost);
+        graphConnectionDetails.setProxyPort(this.proxyPort);
+        graphConnectionDetails.setProxyUser(this.proxyUser);
+        graphConnectionDetails.setProxyPassword(this.proxyPassword);
         return graphConnectionDetails;
     }
 
@@ -135,6 +164,10 @@ public class GraphConnectionDetails implements ConnectionDetailsInterface, IGrap
         this.clientId = element.getElementsByTagName("clientid").item(0).getTextContent();
         this.tenantId = element.getElementsByTagName("tenantid").item(0).getTextContent();
         this.description = element.getElementsByTagName("description").item(0).getTextContent();
+        this.proxyHost = element.getElementsByTagName("proxyhost").item(0).getTextContent();
+        this.proxyPort = element.getElementsByTagName("proxyport").item(0).getTextContent();
+        this.proxyUser = element.getElementsByTagName("proxyuser").item(0).getTextContent();
+        this.proxyPassword = element.getElementsByTagName("proxypassword").item(0).getTextContent();
         this.iSharepointConnection = GraphClientModule.provideSharepointConnection(this);
     }
 
@@ -189,6 +222,10 @@ public class GraphConnectionDetails implements ConnectionDetailsInterface, IGrap
             ((GraphConnectionDetails) detailsInterface).setPassword(this.password);
             ((GraphConnectionDetails) detailsInterface).setClientId(this.clientId);
             ((GraphConnectionDetails) detailsInterface).setTenantId(this.tenantId);
+            ((GraphConnectionDetails) detailsInterface).setProxyHost(this.proxyHost);
+            ((GraphConnectionDetails) detailsInterface).setProxyPort(this.proxyPort);
+            ((GraphConnectionDetails) detailsInterface).setProxyUser(this.proxyUser);
+            ((GraphConnectionDetails) detailsInterface).setProxyPassword(this.proxyPassword);
         }
         return detailsInterface;
     }
@@ -214,6 +251,26 @@ public class GraphConnectionDetails implements ConnectionDetailsInterface, IGrap
             @Override
             public void updatePassword(String password) {
                 GraphConnectionDetails.this.password = password;
+            }
+
+            @Override
+            public void updateProxyHost(String proxyHost) {
+                GraphConnectionDetails.this.proxyHost = proxyHost;
+            }
+
+            @Override
+            public void updateProxyPort(String proxyPort) {
+                GraphConnectionDetails.this.proxyPort = proxyPort;
+            }
+
+            @Override
+            public void updateProxyUser(String proxyUser) {
+                GraphConnectionDetails.this.proxyUser = proxyUser;
+            }
+
+            @Override
+            public void updateProxyPassword(String proxyPassword) {
+                GraphConnectionDetails.this.proxyPassword = proxyPassword;
             }
         };
     }
@@ -266,5 +323,37 @@ public class GraphConnectionDetails implements ConnectionDetailsInterface, IGrap
     @Override
     public void logDebug(String message) {
         this.graphConnectionType.getLog().logDebug(message);
+    }
+
+    public String getProxyHost() {
+        return proxyHost;
+    }
+
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost = proxyHost;
+    }
+
+    public String getProxyPort() {
+        return proxyPort;
+    }
+
+    public void setProxyPort(String proxyPort) {
+        this.proxyPort = proxyPort;
+    }
+
+    public String getProxyUser() {
+        return proxyUser;
+    }
+
+    public void setProxyUser(String proxyUser) {
+        this.proxyUser = proxyUser;
+    }
+
+    public String getProxyPassword() {
+        return proxyPassword;
+    }
+
+    public void setProxyPassword(String proxyPassword) {
+        this.proxyPassword = proxyPassword;
     }
 }

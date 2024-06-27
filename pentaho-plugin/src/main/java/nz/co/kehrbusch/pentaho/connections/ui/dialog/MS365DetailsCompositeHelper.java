@@ -6,6 +6,7 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
+import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.*;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.variables.VariableSpace;
@@ -76,6 +77,20 @@ public class MS365DetailsCompositeHelper {
         getProps().setLook( text );
         text.setLayoutData( getFormDataField( topWidget, width, leftPad ) );
         return text;
+    }
+
+    public Group createGroup( Composite composite, int flags, String key, Control topWidget, int width, int leftPad ) {
+        Group group = new Group( composite, flags );
+        getProps().setLook( group );
+        group.setText(BaseMessages.getString(pkg, key));
+        FormLayout groupLayout = new FormLayout();
+        groupLayout.marginWidth = 10;
+        groupLayout.marginHeight = 10;
+        group.setLayout(groupLayout);
+        FormData formData = getFormDataField( topWidget, width, leftPad );
+        formData.top = new FormAttachment(topWidget, margin * 5);
+        group.setLayoutData(formData);
+        return group;
     }
 
     public FormData getFormDataLabel(Control topWidget, int leftPad ) {
