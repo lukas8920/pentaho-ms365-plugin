@@ -1,4 +1,4 @@
-# MS365 Plugin for Pentaho KETTLE
+# Plugin for Pentaho KETTLE
 
 This project contains a plugin for simplifying access to Microsoft Sharepoints via Microsoft Graph for Pentaho KETTLE applications.
 
