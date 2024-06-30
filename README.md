@@ -4,7 +4,7 @@ This project contains a plugin for simplifying access to Microsoft Sharepoints v
 
 ## Getting the Plugin
 
-You can either download the plugin from the Github releases page https://github.com/lukas8920/pentaho-kettle/releases and place the files in ../[your-pentaho-directory]/plugins/ms365-plugin/, or you can build the plugin from source.
+You can either download the plugin from the Github releases page https://github.com/lukas8920/pentaho-ms365-plugin/releases and place the files in ../[your-pentaho-directory]/plugins/ms365-plugin/, or you can build the plugin from source.
 
 ## Building from Source Code
 
