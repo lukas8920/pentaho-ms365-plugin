@@ -62,3 +62,7 @@ When built from the source, no additional steps are necessary. When downloaded, 
 Below video shows how you can set up a simple application in Pentaho.
 
 https://github.com/lukas8920/pentaho-kettle/assets/42778010/c015b0ae-57bf-4e13-93bb-a3c8dde666d4
+
+## Privacy Statement
+
+For more details, please refer to our [Privacy Policy](PRIVACY.md).
