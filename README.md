@@ -63,6 +63,14 @@ Below video shows how you can set up a simple application in Pentaho.
 
 https://github.com/lukas8920/pentaho-ms365-plugin/assets/42778010/fa416138-2846-4e70-a9ae-0c19828e6204
 
+## Trademark Notice
+
+Microsoft, Microsoft Graph and other Microsoft product and service names are trademarks or registered trademarks of Microsoft Corporation in the United States and other countries.
+
+## Disclaimer
+
+This project is not affiliated with, endorsed by, or sponsored by Microsoft Corporation. The project maintainers are not responsible for any misuse of the code provided in this project.
+
 ## Privacy Statement
 
 For more details, please refer to our [Privacy Policy](PRIVACY.md).
