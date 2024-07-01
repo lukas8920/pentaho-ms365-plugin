@@ -119,4 +119,9 @@ public class SharepointObject implements ICountableSharepointFile {
     public void setPartCounter(Counter partCounter) {
         this.partCounter = partCounter;
     }
+
+    @Override
+    public String toString(){
+        return "Site - name: " + this.name + " - id: " + this.id;
+    }
 }

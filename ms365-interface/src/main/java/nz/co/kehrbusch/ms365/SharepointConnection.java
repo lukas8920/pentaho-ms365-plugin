@@ -6,6 +6,7 @@ import nz.co.kehrbusch.ms365.interfaces.ISharepointConnection;
 import nz.co.kehrbusch.ms365.interfaces.entities.Counter;
 import nz.co.kehrbusch.ms365.interfaces.entities.ICountableSharepointFile;
 import nz.co.kehrbusch.ms365.interfaces.entities.ISharepointFile;
+import nz.co.kehrbusch.ms365.util.SiteIdentifier;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -32,7 +33,24 @@ class SharepointConnection extends SharepointBaseProcessor implements ISharepoin
             int top = Math.max(maxNrOfResults, 100);
             SiteCollectionResponse siteCollectionResponse = this.iSharepointApi.getAllSites(top);
             List<Site> sites = siteCollectionResponse.getValue();
-            if (sites.size() == 0) return iSharepointFiles;
+            log.info("Retrieved sites from server");
+            if (sites.size() == 0) {
+                SiteIdentifier siteIdentifier = new SiteIdentifier(this.iGraphClientDetails);
+                List<String> siteIds = siteIdentifier.getSiteIds();
+                log.info("Sites are restricted - Available sites: ");
+                log.info(siteIds.toString());
+                if (siteIds.size() == 0){
+                    return iSharepointFiles;
+                }
+                siteIds.forEach(siteId -> {
+                    Site site = this.iSharepointApi.getSiteById(siteId);
+                    if (site != null){
+                        site.setName(site.getDisplayName());
+                        sites.add(site);
+                    }
+                });
+                this.iGraphClientDetails.logDebug("Added name to siteId.");
+            }
 
             sites.stream().filter(site -> site.getName() != null).forEach(site -> {
                 SharepointObject siteFile = new SharepointObject(site.getId(), site.getName(), null);

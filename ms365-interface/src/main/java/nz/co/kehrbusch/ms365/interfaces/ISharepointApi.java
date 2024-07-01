@@ -12,4 +12,5 @@ public interface ISharepointApi {
     DriveItemCollectionResponse getItemsByDriveIdAndItemId(String driveId, String itemId, int maxNrOfResults);
     void updateDriveItemByDriveIdAndItemId(String driveId, String itemId, InputStream inputStream);
     DriveItem createNewItemByDriveIdandParentIdandName(String driveId, String parentId, DriveItem driveItem);
+    Site getSiteById(String siteId);
 }

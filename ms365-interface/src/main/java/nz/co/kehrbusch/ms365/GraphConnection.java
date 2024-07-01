@@ -18,7 +18,6 @@ import okhttp3.OkHttpClient;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.util.Map;
 
 class GraphConnection implements IGraphConnection {
     private GraphServiceClient graphServiceClient;

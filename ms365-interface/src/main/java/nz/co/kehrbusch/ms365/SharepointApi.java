@@ -57,4 +57,9 @@ public class SharepointApi implements ISharepointApi {
     public DriveItem createNewItemByDriveIdandParentIdandName(String driveId, String parentId, DriveItem driveItem) {
         return this.graphServiceClient.drives().byDriveId(driveId).items().byDriveItemId(parentId).children().post(driveItem);
     }
+
+    @Override
+    public Site getSiteById(String siteId) {
+        return this.graphServiceClient.sites().bySiteId(siteId).get();
+    }
 }
