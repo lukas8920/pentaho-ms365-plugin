@@ -55,7 +55,7 @@ When built from the source, no additional steps are necessary. When downloaded, 
 
 ## Using the plugin
 
-1. Set up a client application in azure portal - (wiki entry in progress)
+1. Set up a client application in azure portal - [Azure Portal Setup](https://github.com/lukas8920/pentaho-ms365-plugin/wiki/Azure-Portal-Setup)
 2. Create an MS365 connection in Pentaho with the access credentials taken from the azure portal
 3. Ready to use the additional MS365 steps of the plugin
 
